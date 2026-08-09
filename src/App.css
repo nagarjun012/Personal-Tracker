@@ -1,0 +1,13 @@
+/* App Custom Page-Specific Styling */
+.dashboard-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 350px !important;
+  gap: 1.5rem !important;
+  align-items: flex-start !important;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
