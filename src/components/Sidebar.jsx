@@ -76,7 +76,7 @@ export default function Sidebar() {
           fontSize: '1.2rem',
           boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)'
         }}>
-          A
+          P
         </div>
         <span style={{
           fontFamily: 'var(--font-heading)',
@@ -86,7 +86,7 @@ export default function Sidebar() {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-          Antigravity
+          Personal Tracker
         </span>
       </div>
 

@@ -106,7 +106,7 @@ export default function Auth() {
             fontSize: '1.5rem',
             boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
           }}>
-            A
+            P
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.5rem' }}>
             {isLogin ? 'Welcome Back' : 'Create Account'}
