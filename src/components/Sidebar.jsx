@@ -13,7 +13,9 @@ import {
   Sparkles, 
   Settings, 
   LogOut,
-  Award
+  Award,
+  Info,
+  Zap
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -31,6 +33,7 @@ export default function Sidebar() {
     { id: 'analytics', name: 'Analytics', icon: BarChart3 },
     { id: 'coach', name: 'AI Coach', icon: Sparkles },
     { id: 'settings', name: 'Settings', icon: Settings },
+    { id: 'about', name: 'About App', icon: Info },
   ];
 
   if (!user) return null;
@@ -56,47 +59,55 @@ export default function Sidebar() {
       backdropFilter: 'blur(var(--glass-blur))'
     }}>
       {/* App Branding */}
-      <div style={{
-        padding: '2rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        borderBottom: '1px solid var(--border-color)'
-      }}>
+      <div 
+        onClick={() => setActiveTab('about')}
+        style={{
+          padding: '1.75rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.85rem',
+          borderBottom: '1px solid var(--border-color)',
+          cursor: 'pointer'
+        }}
+      >
         <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: 'var(--radius-md)',
-          background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-purple))',
+          width: '36px',
+          height: '36px',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#ffffff',
-          fontWeight: 'bold',
-          fontSize: '1.2rem',
-          boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)'
+          boxShadow: '0 0 14px rgba(99, 102, 241, 0.4)'
         }}>
-          P
+          <Zap size={20} fill="#ffffff" color="#ffffff" />
         </div>
-        <span style={{
-          fontFamily: 'var(--font-heading)',
-          fontWeight: 800,
-          fontSize: '1.35rem',
-          background: 'linear-gradient(90deg, var(--text-primary), var(--accent-primary))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
-          Personal Tracker
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 800,
+            fontSize: '1.25rem',
+            background: 'linear-gradient(90deg, var(--text-primary), var(--accent-primary))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            lineHeight: 1.1
+          }}>
+            Aura Life OS
+          </span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 600, letterSpacing: '0.05em' }}>
+            PERSONAL EDITION
+          </span>
+        </div>
       </div>
 
       {/* Navigation List */}
       <nav style={{
         flex: 1,
-        padding: '1.5rem 1rem',
+        padding: '1.25rem 1rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.25rem',
+        gap: '0.2rem',
         overflowY: 'auto'
       }}>
         {navItems.map((item) => {
@@ -106,123 +117,116 @@ export default function Sidebar() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
+              className={`nav-item ${isActive ? 'active' : ''}`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.85rem',
+                gap: '0.75rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
+                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: '0.9rem',
+                transition: 'all 0.2s ease',
+                border: 'none',
                 textAlign: 'left',
                 width: '100%',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'rgba(var(--accent-primary-rgb), 0.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                borderRadius: isActive ? '0 var(--radius-sm) var(--radius-sm) 0' : 'var(--radius-sm)',
-                transition: 'all var(--transition-fast)'
+                cursor: 'pointer'
               }}
-              className="nav-btn"
             >
-              <Icon size={18} style={{
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                transition: 'color var(--transition-fast)'
-              }} />
-              <span style={{ fontSize: '0.95rem' }}>{item.name}</span>
+              <Icon size={18} color={isActive ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+              <span>{item.name}</span>
             </button>
           );
         })}
       </nav>
 
-      {/* Profile & XP Widget */}
+      {/* Bottom Section: Gamification Level & Logout */}
       <div style={{
-        padding: '1.25rem',
+        padding: '1.25rem 1rem',
         borderTop: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
-        background: 'rgba(0,0,0,0.01)'
+        gap: '1rem'
       }}>
-        {/* XP Progress Card */}
-        <div className="glass-panel badge-glow" style={{
-          padding: '0.85rem 1rem',
+        {/* XP Level Card */}
+        <div style={{
+          padding: '0.85rem',
           borderRadius: 'var(--radius-md)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem',
-          background: 'var(--bg-tertiary)',
-          border: '1px solid var(--border-color)'
+          gap: '0.5rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              <Award size={14} style={{ color: 'var(--accent-purple)' }} />
-              Level {xpData.level}
-            </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
-              {xpData.totalXp} XP
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-purple)' }}>
+              <Award size={15} />
+              <span>Level {xpData.level}</span>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{xpData.totalXp} XP</span>
           </div>
+
           <div style={{
+            width: '100%',
             height: '6px',
-            backgroundColor: 'var(--bg-primary)',
-            borderRadius: 'var(--radius-full)',
-            overflow: 'hidden',
-            width: '100%'
+            borderRadius: '3px',
+            background: 'var(--border-color)',
+            overflow: 'hidden'
           }}>
             <div style={{
               width: `${xpPercent}%`,
               height: '100%',
               background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-purple))',
-              borderRadius: 'var(--radius-full)',
-              transition: 'width var(--transition-slow)'
+              borderRadius: '3px',
+              transition: 'width 0.3s ease'
             }} />
           </div>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textAlign: 'right' }}>
-            {xpData.xpForNext - xpData.totalXp > 0 ? `${xpData.xpForNext - xpData.totalXp} XP to next level` : 'Max Level'}
-          </span>
         </div>
 
-        {/* User Card */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.5rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+        {/* User Profile & Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--accent-primary)',
-              color: 'white',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'var(--accent-primary)',
+              color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 600,
+              fontWeight: 700,
+              fontSize: '0.85rem',
               flexShrink: 0
             }}>
-              {user.name ? user.name[0].toUpperCase() : 'U'}
+              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.name}
               </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.email}
               </span>
             </div>
           </div>
-          <button 
+
+          <button
             onClick={logout}
-            style={{
-              padding: '0.5rem',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              color: 'var(--text-tertiary)'
-            }}
             title="Log Out"
-            className="btn-secondary"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-tertiary)',
+              cursor: 'pointer',
+              padding: '0.4rem',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
             <LogOut size={16} />
           </button>

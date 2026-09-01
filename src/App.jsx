@@ -20,6 +20,7 @@ import Journal from './pages/Journal';
 import Analytics from './pages/Analytics';
 import AICoach from './pages/AICoach';
 import Settings from './pages/Settings';
+import About from './pages/About';
 
 import { Plus, Search } from 'lucide-react';
 import './App.css';
@@ -46,7 +47,7 @@ function MainAppContent() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>Syncing database logs...</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>Loading Aura Life OS...</span>
         </div>
       </div>
     );
@@ -88,6 +89,8 @@ function MainAppContent() {
         return <AICoach />;
       case 'settings':
         return <Settings />;
+      case 'about':
+        return <About />;
       default:
         return <Dashboard />;
     }
