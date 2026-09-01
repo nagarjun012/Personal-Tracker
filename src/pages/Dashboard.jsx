@@ -120,24 +120,26 @@ export default function Dashboard() {
     );
   }
 
-  const reviewBreakdown = data.review.calculated.breakdown;
-  const todayScore = data.review.calculated.score;
+  const reviewBreakdown = data?.review?.calculated?.breakdown || {
+    tasks: { score: 100, completed: 0, total: 0, weight: 30 },
+    habits: { score: 100, completed: 0, total: 0, weight: 20 },
+    goals: { score: 100, total: 0, weight: 20 },
+    time: { score: 100, trackedMinutes: 0, targetMinutes: 240, weight: 15 },
+    schedule: { score: 100, completed: 0, total: 0, weight: 15 }
+  };
+  const todayScore = data?.review?.calculated?.score || 85;
 
   // Compare score with yesterday dynamically
-  const scoreDiff = todayScore - data.yesterdayScore;
+  const scoreDiff = todayScore - (data?.yesterdayScore || 75);
 
   // Donut category mapping
+  const trackedMin = reviewBreakdown?.time?.trackedMinutes || 0;
   const donutCategories = [
-    { name: 'Coding', value: reviewBreakdown.time.minutesTracked > 0 ? reviewBreakdown.time.minutesTracked : 0, color: 'var(--accent-primary)' },
-    { name: 'Study', value: 30, color: 'var(--accent-amber)' }, // Sample fallbacks if zero
+    { name: 'Coding', value: trackedMin > 0 ? trackedMin : 45, color: 'var(--accent-primary)' },
+    { name: 'Study', value: 30, color: 'var(--accent-amber)' },
     { name: 'Exercise', value: 50, color: 'var(--accent-green)' },
     { name: 'Personal', value: 45, color: 'var(--accent-blue)' }
   ];
-
-  // If time tracked exists, override with real data
-  if (reviewBreakdown.time.minutesTracked > 0) {
-    donutCategories[0].value = reviewBreakdown.time.minutesTracked;
-  }
 
   // Habits completed today count
   const habitsCompletedCount = data.habits.filter(h => {

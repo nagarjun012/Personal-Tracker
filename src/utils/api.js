@@ -102,7 +102,7 @@ async function handleRequest(url, method = 'GET', body = null) {
   }
 
   // Daily Reviews
-  if (cleanUrl === '/api/daily-reviews') {
+  if (cleanUrl === '/api/daily-reviews' || cleanUrl === '/api/reviews') {
     if (method === 'GET') return storage.getDailyReview(userId, urlParams.get('date'));
     if (method === 'POST') return storage.saveDailyReview(userId, body);
   }
