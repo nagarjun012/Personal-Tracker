@@ -600,11 +600,20 @@ export const storage = {
     const index = entries.findIndex(t => t.id === Number(id) && t.user_id === Number(userId));
     if (index === -1) throw new Error('Time entry not found.');
 
-    entries[index] = { ...entries[index], ...data };
+    const stopTime = data.stop_time || data.end_time || new Date().toISOString();
+    const startTime = entries[index].start_time;
+    const calcDuration = Math.max(1, Math.round((new Date(stopTime) - new Date(startTime)) / 1000));
+
+    entries[index] = {
+      ...entries[index],
+      ...data,
+      stop_time: stopTime,
+      duration: data.duration || calcDuration
+    };
     setItem(KEYS.TIME_ENTRIES, entries);
 
-    if (data.duration && data.duration > 60) {
-      const minutes = Math.round(data.duration / 60);
+    if (entries[index].duration && entries[index].duration > 60) {
+      const minutes = Math.round(entries[index].duration / 60);
       storage.addXp(userId, Math.min(50, Math.max(5, Math.round(minutes / 5))), `Logged ${minutes}m focus session: ${entries[index].activity_name}`);
     }
 
