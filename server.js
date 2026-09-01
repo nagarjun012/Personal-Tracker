@@ -1576,7 +1576,7 @@ app.get('/api/search', authenticateToken, (req, res) => {
 // ==========================================
 // SERVE FRONTEND (PRODUCTION BUILD)
 // ==========================================
-if (process.env.NODE_ENV === 'production' || true) {
+if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true') {
   // Serve static files from the build output directory
   app.use(express.static(path.join(__dirname, 'dist')));
 
