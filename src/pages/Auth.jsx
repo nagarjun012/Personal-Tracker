@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Lock, Mail, User, Sparkles } from 'lucide-react';
+import { Lock, Mail, User, Sparkles, KeyRound, CheckCircle, X } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function Auth() {
@@ -11,6 +11,14 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Forgot Password / Reset State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,17 +62,47 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      addToast('Please enter your email address first.', 'warning');
+  const openResetModal = () => {
+    setResetEmail(email);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetMessage('');
+    setShowResetModal(true);
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      addToast('Please enter your account email.', 'warning');
       return;
     }
-    try {
-      const res = await api.resetPassword(email);
-      addToast(res.message, 'success');
-    } catch (err) {
-      addToast('Failed to trigger password reset.', 'error');
+    if (!newPassword || !confirmPassword) {
+      addToast('Please enter and confirm your new password.', 'warning');
+      return;
     }
+    if (newPassword !== confirmPassword) {
+      addToast('Passwords do not match.', 'error');
+      return;
+    }
+    if (newPassword.length < 6) {
+      addToast('Password should be at least 6 characters long.', 'warning');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await api.resetPassword(resetEmail, newPassword);
+      setResetMessage(res.message);
+      addToast('Password updated successfully!', 'success');
+      setEmail(resetEmail);
+      setPassword(newPassword);
+      setTimeout(() => {
+        setShowResetModal(false);
+      }, 1500);
+    } catch (err) {
+      addToast(err.message || 'Failed to reset password.', 'error');
+    }
+    setResetLoading(false);
   };
 
   return (
@@ -92,7 +130,7 @@ export default function Auth() {
         boxShadow: 'var(--shadow-lg)'
       }}>
         {/* Header Branding */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textAlign: 'center' }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '44px',
             height: '44px',
@@ -116,7 +154,7 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Error Callout */}
+        {/* Error Alert */}
         {authError && (
           <div style={{
             padding: '0.75rem 1rem',
@@ -175,8 +213,8 @@ export default function Auth() {
               {isLogin && (
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
-                  style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 500, cursor: 'pointer' }}
+                  onClick={openResetModal}
+                  style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 500, cursor: 'pointer', background: 'none', border: 'none' }}
                 >
                   Forgot Password?
                 </button>
@@ -199,47 +237,156 @@ export default function Auth() {
 
           <button
             type="submit"
-            disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.8rem', marginTop: '0.5rem', opacity: loading ? 0.7 : 1 }}
+            disabled={loading}
+            style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
           >
-            {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
+            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
-        {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>OR</span>
-          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+        {/* Demo Login Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '0.5rem 0' }}>
+          <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></div>
+          <span style={{ padding: '0 0.75rem', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>OR</span>
+          <div style={{ flex: 1, borderBottom: '1px solid var(--border-color)' }}></div>
         </div>
 
-        {/* Demo Account Button */}
         <button
           type="button"
           onClick={handleDemoLogin}
-          disabled={loading}
           className="btn btn-secondary"
-          style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)' }}
+          disabled={loading}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
         >
-          <Sparkles size={16} />
-          Explore with Demo User
+          <Sparkles size={16} color="var(--accent-primary)" />
+          Explore Demo Account
         </button>
 
-        {/* Toggle Mode */}
+        {/* Auth Toggle */}
         <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
           <button
+            type="button"
             onClick={() => {
               setIsLogin(!isLogin);
               setAuthError('');
             }}
-            style={{ color: 'var(--accent-primary)', fontWeight: 600, cursor: 'pointer' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent-primary)',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
           >
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? 'Sign Up' : 'Log In'}
           </button>
         </div>
       </div>
+
+      {/* Forgot Password / Account Recovery Modal */}
+      {showResetModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div className="glass-panel animate-scale" style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '2rem',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowResetModal(false)}
+              style={{ position: 'absolute', right: '1rem', top: '1rem', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '0.6rem', borderRadius: 'var(--radius-md)', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-primary)' }}>
+                <KeyRound size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Reset Password</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Set a new password for your account</p>
+              </div>
+            </div>
+
+            {resetMessage ? (
+              <div style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: 'var(--radius-md)', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <CheckCircle size={18} />
+                <span>{resetMessage}</span>
+              </div>
+            ) : (
+              <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Account Email</label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="input-field"
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    placeholder="At least 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="input-field"
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Confirm New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="input-field"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={resetLoading}
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                >
+                  {resetLoading ? 'Updating...' : 'Update Password & Log In'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
