@@ -1,11 +1,11 @@
 @echo off
-title Starting Aura Life OS...
+title Aura Life OS Launcher
 echo ==========================================
 echo       STARTING AURA LIFE OS
 echo ==========================================
-echo Launching development server...
-start /b cmd /c "npm run dev"
-echo Waiting 5 seconds for server startup...
-timeout /t 5 >nul
-echo Opening http://localhost:5173 in browser...
-start http://localhost:5173
+echo Launching browser...
+start "" "http://localhost:5173"
+echo.
+echo Starting Vite server... (Do not close this window)
+echo ==========================================
+call npx.cmd vite
