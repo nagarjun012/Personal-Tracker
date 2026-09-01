@@ -948,19 +948,38 @@ export const storage = {
 
   // JSON Export & Delete Account
   exportData: async (userId) => {
+    const uid = Number(userId);
     return {
-      user: storage.getCurrentUser(userId),
-      settings: storage.getSettings(userId),
-      tasks: getItem(KEYS.TASKS, []).filter(t => t.user_id === Number(userId)),
-      habits: getItem(KEYS.HABITS, []).filter(h => h.user_id === Number(userId)),
-      goals: getItem(KEYS.GOALS, []).filter(g => g.user_id === Number(userId)),
-      activities: getItem(KEYS.ACTIVITIES, []).filter(a => a.user_id === Number(userId)),
-      time_entries: getItem(KEYS.TIME_ENTRIES, []).filter(t => t.user_id === Number(userId)),
-      journal_entries: getItem(KEYS.JOURNAL, []).filter(j => j.user_id === Number(userId)),
-      mood_logs: getItem(KEYS.MOOD, []).filter(m => m.user_id === Number(userId)),
-      daily_reviews: getItem(KEYS.REVIEWS, []).filter(r => r.user_id === Number(userId)),
-      xp_logs: getItem(KEYS.XP_LOGS, []).filter(x => x.user_id === Number(userId))
+      version: '2.5.0',
+      exported_at: new Date().toISOString(),
+      user: getItem(KEYS.USERS, []).find(u => u.id === uid),
+      settings: getItem(KEYS.SETTINGS, []).find(s => s.user_id === uid),
+      tasks: getItem(KEYS.TASKS, []).filter(t => t.user_id === uid),
+      habits: getItem(KEYS.HABITS, []).filter(h => h.user_id === uid),
+      goals: getItem(KEYS.GOALS, []).filter(g => g.user_id === uid),
+      activities: getItem(KEYS.ACTIVITIES, []).filter(a => a.user_id === uid),
+      timeEntries: getItem(KEYS.TIME_ENTRIES, []).filter(t => t.user_id === uid),
+      journal: getItem(KEYS.JOURNAL, []).filter(j => j.user_id === uid),
+      mood: getItem(KEYS.MOOD, []).filter(m => m.user_id === uid),
+      dailyReviews: getItem(KEYS.REVIEWS, []).filter(r => r.user_id === uid)
     };
+  },
+
+  importData: async (userId, importedObj) => {
+    if (!importedObj || typeof importedObj !== 'object') {
+      throw new Error('Invalid backup file format.');
+    }
+    if (importedObj.tasks) setItem(KEYS.TASKS, importedObj.tasks);
+    if (importedObj.habits) setItem(KEYS.HABITS, importedObj.habits);
+    if (importedObj.goals) setItem(KEYS.GOALS, importedObj.goals);
+    if (importedObj.activities) setItem(KEYS.ACTIVITIES, importedObj.activities);
+    if (importedObj.timeEntries) setItem(KEYS.TIME_ENTRIES, importedObj.timeEntries);
+    if (importedObj.journal) setItem(KEYS.JOURNAL, importedObj.journal);
+    if (importedObj.mood) setItem(KEYS.MOOD, importedObj.mood);
+    if (importedObj.dailyReviews) setItem(KEYS.REVIEWS, importedObj.dailyReviews);
+    if (importedObj.settings) setItem(KEYS.SETTINGS, importedObj.settings);
+
+    return { message: 'Database backup imported successfully!' };
   },
 
   // Factory Reset

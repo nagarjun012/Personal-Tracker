@@ -1,0 +1,18 @@
+{
+  "short_name": "DailyTracker",
+  "name": "DAILY TRACKER — Personal Life & Productivity System",
+  "description": "Unified Personal Life Management, Habit Analytics & Focus System by NAGARJUN S S",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "display": "standalone",
+  "orientation": "portrait"
+}

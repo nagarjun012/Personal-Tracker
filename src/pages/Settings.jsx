@@ -10,6 +10,7 @@ import {
   Scale, 
   Database,
   Download,
+  Upload,
   Trash2,
   AlertCircle,
   RotateCcw
@@ -88,13 +89,29 @@ export default function Settings() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `aura_life_os_backup_${new Date().toLocaleDateString('sv')}.json`);
+      downloadAnchor.setAttribute("download", `daily_tracker_backup_${new Date().toLocaleDateString('sv')}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
       addToast('Database backup downloaded successfully. 💾', 'success');
     } catch (err) {
       addToast('Failed to export data backup.', 'error');
+    }
+  };
+
+  const handleImportJSON = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      await api.post('/api/import', json);
+      addToast('Database restored successfully! Reloading session...', 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      addToast('Invalid backup JSON file.', 'error');
     }
   };
 
@@ -398,6 +415,15 @@ export default function Settings() {
                 <Download size={14} />
                 Export JSON Backup
               </button>
+
+              <label 
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', marginBottom: 0 }}
+              >
+                <Upload size={14} />
+                Import JSON Backup
+                <input type="file" accept=".json" onChange={handleImportJSON} style={{ display: 'none' }} />
+              </label>
 
               <button
                 type="button"

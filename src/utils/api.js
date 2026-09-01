@@ -113,6 +113,7 @@ async function handleRequest(url, method = 'GET', body = null) {
   if (cleanUrl === '/api/gamification') return storage.getGamification(userId);
   if (cleanUrl === '/api/search') return storage.searchAll(userId, urlParams.get('q'));
   if (cleanUrl === '/api/export' || cleanUrl === '/api/data/export') return storage.exportData(userId);
+  if (cleanUrl === '/api/import' || cleanUrl === '/api/data/import') return storage.importData(userId, body);
   if (cleanUrl === '/api/reset-data') return storage.resetAllData();
   if ((cleanUrl === '/api/account' || cleanUrl === '/api/data/delete-account') && method === 'DELETE') return storage.deleteAccount(userId);
 
