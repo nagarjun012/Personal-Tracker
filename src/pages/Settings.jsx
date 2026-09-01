@@ -11,7 +11,8 @@ import {
   Database,
   Download,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 
 export default function Settings() {
@@ -81,11 +82,35 @@ export default function Settings() {
     await updateSettings(payload);
   };
 
-  const handleExport = () => {
-    const token = localStorage.getItem('token');
-    // Open backing download route directly in browser
-    window.open(`/api/data/export?token=${token}`, '_blank');
-    addToast('Database backup downloaded successfully. 💾', 'success');
+  const handleExportJSON = async () => {
+    try {
+      const data = await api.get('/api/export');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `aura_life_os_backup_${new Date().toLocaleDateString('sv')}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      addToast('Database backup downloaded successfully. 💾', 'success');
+    } catch (err) {
+      addToast('Failed to export data backup.', 'error');
+    }
+  };
+
+  const handleResetAllData = async () => {
+    if (!window.confirm('RESET WARNING: Are you sure you want to reset all application data to default from the beginning? This will restore initial demo records and clear custom data.')) {
+      return;
+    }
+    try {
+      await api.post('/api/reset-data');
+      addToast('All data reset to defaults! Reloading application...', 'info');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      addToast('Failed to reset data.', 'error');
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -108,119 +133,111 @@ export default function Settings() {
       {/* Header section */}
       <div>
         <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Settings</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Configure scoring parameters, backups, and appearance settings.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+          Customize your experience, score weighting algorithms, and personal goals
+        </p>
       </div>
 
-      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
-        {/* Profile Card */}
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--accent-primary)',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.75rem',
-            fontWeight: 800
-          }}>
-            {user?.name ? user.name[0].toUpperCase() : 'U'}
+        {/* Save Bar Banner */}
+        <div className="glass-panel" style={{
+          padding: '1rem 1.5rem',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: '20px',
+          zIndex: 50,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow-md)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            {!weightsValid ? (
+              <span style={{ color: 'var(--accent-red)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                <AlertCircle size={16} /> Total score weight must equal 100% (Current: {totalWeights}%)
+              </span>
+            ) : (
+              <span style={{ color: 'var(--text-secondary)' }}>System configurations ready to apply</span>
+            )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 700 }}>{user?.name}</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{user?.email}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Account isolation active 🔒</span>
-          </div>
-        </Card>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!weightsValid}
+            style={{ padding: '0.5rem 1.5rem', fontWeight: 600 }}
+          >
+            Save Changes
+          </button>
+        </div>
 
-        {/* Form Fields split */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 340px',
-          gap: '1.5rem',
-          alignItems: 'flex-start'
-        }}
-        className="dashboard-grid"
-        >
-          {/* Preferences */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+          
+          {/* Main Config Column */}
+          <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* Appearance settings */}
-            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* User Profile Card */}
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                <Palette size={18} style={{ color: 'var(--accent-primary)' }} />
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Appearance & Themes</h3>
+                <User size={18} style={{ color: 'var(--accent-primary)' }} />
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Profile Overview</h2>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Select Theme</label>
-                  <select value={theme} onChange={(e) => setTheme(e.target.value)} className="input-field">
-                    <option value="light">Light Mode</option>
-                    <option value="dark">Dark Mode</option>
-                    <option value="system">Adapt to System</option>
-                  </select>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-purple))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '1.5rem',
+                  fontWeight: 800
+                }}>
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Main Focus Theme</label>
-                  <input
-                    type="text"
-                    value={focus}
-                    onChange={(e) => setFocus(e.target.value)}
-                    placeholder="e.g. Software Engineering & Fitness"
-                    className="input-field"
-                  />
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{user?.name}</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{user?.email}</p>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Account ID: {user?.id}</span>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Routine Wake Hour</label>
-                  <input
-                    type="time"
-                    value={wakeTime}
-                    onChange={(e) => setWakeTime(e.target.value)}
-                    className="input-field"
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Routine Sleep Hour</label>
-                  <input
-                    type="time"
-                    value={sleepTime}
-                    onChange={(e) => setSleepTime(e.target.value)}
-                    className="input-field"
-                  />
-                </div>
+              <div className="form-group" style={{ marginBottom: 0, marginTop: '0.5rem' }}>
+                <label>Main Focus / Primary Goal Statement</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Master Fullstack Web Development & Fitness"
+                  value={focus}
+                  onChange={(e) => setFocus(e.target.value)}
+                  className="input-field"
+                />
               </div>
             </Card>
 
-            {/* Productivity Scoring Weights */}
-            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            {/* Score Weights Algorithm Config */}
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Scale size={18} style={{ color: 'var(--accent-purple)' }} />
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Scoring Preference weights</h3>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Productivity Score Weights</h2>
                 </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: weightsValid ? 'var(--accent-green)' : 'var(--accent-red)' }}>
-                  Total: {totalWeights}% {weightsValid ? '✓' : '(Must equal 100%)'}
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: weightsValid ? '#10b981' : 'var(--accent-red)' }}>
+                  Total: {totalWeights}% / 100%
                 </span>
               </div>
 
-              {!weightsValid && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 0.8rem', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: 'var(--radius-sm)', color: 'var(--accent-red)', fontSize: '0.75rem', fontWeight: 600 }}>
-                  <AlertCircle size={14} />
-                  <span>The combined sum is currently {totalWeights}%. Adjust values to reach exactly 100%.</span>
-                </div>
-              )}
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Customize how your daily productivity score is calculated based on personal priorities.
+              </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Tasks (%)</label>
+                  <label>Tasks Weight ({tasksW}%)</label>
                   <input
                     type="number"
                     min="0"
@@ -232,7 +249,7 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Habits (%)</label>
+                  <label>Habits Weight ({habitsW}%)</label>
                   <input
                     type="number"
                     min="0"
@@ -244,7 +261,7 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Goals (%)</label>
+                  <label>Goals Weight ({goalsW}%)</label>
                   <input
                     type="number"
                     min="0"
@@ -256,7 +273,7 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Focus Time (%)</label>
+                  <label>Focus Time Weight ({timeW}%)</label>
                   <input
                     type="number"
                     min="0"
@@ -267,8 +284,8 @@ export default function Settings() {
                   />
                 </div>
 
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Schedule (%)</label>
+                <div className="form-group" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+                  <label>Schedule Adherence Weight ({schedW}%)</label>
                   <input
                     type="number"
                     min="0"
@@ -281,20 +298,61 @@ export default function Settings() {
               </div>
             </Card>
 
-            <button
-              type="submit"
-              disabled={!weightsValid}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.8rem', opacity: weightsValid ? 1 : 0.6 }}
-            >
-              Save Configuration Settings
-            </button>
+            {/* Routine Timings */}
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                Daily Routine Target Hours
+              </h2>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Wake-Up Target Time</label>
+                  <input
+                    type="time"
+                    value={wakeTime}
+                    onChange={(e) => setWakeTime(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Sleep Target Time</label>
+                  <input
+                    type="time"
+                    value={sleepTime}
+                    onChange={(e) => setSleepTime(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+            </Card>
           </div>
 
-          {/* Side Panel: Notifications and Data controls */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Right Column Config */}
+          <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* Notification triggers */}
+            {/* Theme Config */}
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                <Palette size={16} style={{ color: 'var(--accent-pink)' }} />
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Appearance</h3>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Theme Preset</label>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="system">System Mode</option>
+                  <option value="dark">Dark Mode (Default)</option>
+                  <option value="light">Light Mode</option>
+                </select>
+              </div>
+            </Card>
+
+            {/* Notifications & XP */}
             <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 <Bell size={16} style={{ color: 'var(--accent-amber)' }} />
@@ -324,7 +382,7 @@ export default function Settings() {
               </div>
             </Card>
 
-            {/* Backups & Actions */}
+            {/* Data Management & Factory Reset */}
             <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 <Database size={16} style={{ color: 'var(--accent-blue)' }} />
@@ -333,12 +391,22 @@ export default function Settings() {
 
               <button
                 type="button"
-                onClick={handleExport}
+                onClick={handleExportJSON}
                 className="btn btn-secondary"
                 style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem' }}
               >
                 <Download size={14} />
                 Export JSON Backup
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetAllData}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--accent-amber)', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+              >
+                <RotateCcw size={14} />
+                Reset All Data to Default
               </button>
 
               <button

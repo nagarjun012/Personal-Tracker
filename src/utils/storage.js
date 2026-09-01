@@ -963,6 +963,16 @@ export const storage = {
     };
   },
 
+  // Factory Reset
+  resetAllData: async () => {
+    Object.values(KEYS).forEach(key => localStorage.removeItem(key));
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('active_timer');
+    initBrowserStorage();
+    return { message: 'All application data reset to initial default state.' };
+  },
+
   deleteAccount: async (userId) => {
     const uid = Number(userId);
     setItem(KEYS.USERS, getItem(KEYS.USERS, []).filter(u => u.id !== uid));
