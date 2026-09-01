@@ -14,7 +14,9 @@ import {
   BarChart3, 
   Zap,
   Globe,
-  Award
+  Award,
+  Crown,
+  Code2
 } from 'lucide-react';
 import { api } from '../utils/api';
 
@@ -123,6 +125,61 @@ export default function About() {
           <span className="badge" style={{ padding: '0.4rem 0.85rem', background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>
             Netlify Edge CDN Ready
           </span>
+        </div>
+      </div>
+
+      {/* Creator & Architect Credit Card */}
+      <div className="glass-panel hover-lift" style={{
+        padding: '2rem 2.5rem',
+        borderRadius: 'var(--radius-lg)',
+        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.05))',
+        border: '1px solid rgba(99, 102, 241, 0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1.5rem',
+        boxShadow: 'var(--shadow-md)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-purple))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff',
+            boxShadow: '0 0 16px rgba(99, 102, 241, 0.4)'
+          }}>
+            <Crown size={28} />
+          </div>
+
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+              Created & Engineered By
+            </span>
+            <h2 style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              fontFamily: 'var(--font-heading)',
+              background: 'linear-gradient(90deg, #ffffff, var(--accent-primary), var(--accent-purple))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginTop: '2px'
+            }}>
+              NAGARJUN S S
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Chief System Architect & Software Engineer • Aura Life OS
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '20px', color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
+          <Award size={16} />
+          <span>Verified Official Release</span>
         </div>
       </div>
 
