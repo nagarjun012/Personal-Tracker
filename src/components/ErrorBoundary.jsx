@@ -52,7 +52,7 @@ export default class ErrorBoundary extends React.Component {
             </div>
 
             <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Aura Life OS</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>DAILY TRACKER</h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                 Application state refreshed. Click below to restore your session.
               </p>

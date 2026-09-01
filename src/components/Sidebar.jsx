@@ -70,33 +70,31 @@ export default function Sidebar() {
           cursor: 'pointer'
         }}
       >
-        <div style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#ffffff',
-          boxShadow: '0 0 14px rgba(99, 102, 241, 0.4)'
-        }}>
-          <Zap size={20} fill="#ffffff" color="#ffffff" />
-        </div>
+        <img 
+          src="/favicon.svg" 
+          alt="DAILY TRACKER" 
+          style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '12px',
+            boxShadow: '0 0 14px rgba(99, 102, 241, 0.4)'
+          }}
+        />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{
             fontFamily: 'var(--font-heading)',
             fontWeight: 800,
-            fontSize: '1.25rem',
-            background: 'linear-gradient(90deg, var(--text-primary), var(--accent-primary))',
+            fontSize: '1.2rem',
+            background: 'linear-gradient(90deg, #ffffff, var(--accent-primary), var(--accent-purple))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            lineHeight: 1.1
+            lineHeight: 1.1,
+            letterSpacing: '0.02em'
           }}>
-            Aura Life OS
+            DAILY TRACKER
           </span>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 600, letterSpacing: '0.05em' }}>
-            PERSONAL EDITION
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 600, letterSpacing: '0.08em' }}>
+            PERSONAL SYSTEM
           </span>
         </div>
       </div>

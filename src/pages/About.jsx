@@ -94,22 +94,27 @@ export default function About() {
         gap: '1.25rem',
         boxShadow: 'var(--shadow-md)'
       }}>
-        <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '20px',
-          background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 24px rgba(99, 102, 241, 0.4)'
-        }}>
-          <Zap size={38} color="#ffffff" />
-        </div>
+        <img 
+          src="/favicon.svg" 
+          alt="DAILY TRACKER" 
+          style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '24px',
+            boxShadow: '0 0 28px rgba(99, 102, 241, 0.45)'
+          }}
+        />
 
         <div>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
-            Aura Life OS
+          <h1 style={{
+            fontSize: '2.4rem',
+            fontWeight: 800,
+            fontFamily: 'var(--font-heading)',
+            background: 'linear-gradient(90deg, #ffffff, var(--accent-primary), var(--accent-purple))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            DAILY TRACKER
           </h1>
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.25rem', maxWidth: '600px' }}>
             Unified Personal Life Management, Habit Analytics & Focus System
@@ -173,7 +178,7 @@ export default function About() {
               NAGARJUN S S
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              Chief System Architect & Software Engineer • Aura Life OS
+              Chief System Architect & Software Engineer • DAILY TRACKER
             </p>
           </div>
         </div>

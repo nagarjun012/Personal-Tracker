@@ -1,7 +1,7 @@
 @echo off
-title Aura Life OS Launcher
+title DAILY TRACKER Launcher
 echo ==========================================
-echo       STARTING AURA LIFE OS
+echo       STARTING DAILY TRACKER
 echo ==========================================
 echo Launching browser...
 start "" "http://localhost:5173"

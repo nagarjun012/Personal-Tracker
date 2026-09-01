@@ -131,25 +131,36 @@ export default function Auth() {
       }}>
         {/* Header Branding */}
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-purple))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
-          }}>
-            P
+          <img 
+            src="/favicon.svg" 
+            alt="DAILY TRACKER" 
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '16px',
+              boxShadow: '0 0 24px rgba(99, 102, 241, 0.4)'
+            }}
+          />
+          <div>
+            <h1 style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              fontFamily: 'var(--font-heading)',
+              background: 'linear-gradient(90deg, #ffffff, var(--accent-primary), var(--accent-purple))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginTop: '0.25rem'
+            }}>
+              DAILY TRACKER
+            </h1>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 600, letterSpacing: '0.08em' }}>
+              PERSONAL SYSTEM
+            </span>
           </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '0.25rem' }}>
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             {isLogin ? 'Access your personal productivity dashboard' : 'Start your holistic self-improvement journey'}
           </p>
         </div>
