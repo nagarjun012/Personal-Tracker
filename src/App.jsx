@@ -5,6 +5,7 @@ import BottomNav from './components/BottomNav';
 import ToastContainer from './components/ToastContainer';
 import QuickAddModal from './components/QuickAddModal';
 import CommandPalette from './components/CommandPalette';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Pages
 import Auth from './pages/Auth';
@@ -178,8 +179,10 @@ function MainAppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainAppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <MainAppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
