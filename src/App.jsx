@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
+import MobileDrawer from './components/MobileDrawer';
 import ToastContainer from './components/ToastContainer';
 import QuickAddModal from './components/QuickAddModal';
 import CommandPalette from './components/CommandPalette';
@@ -23,7 +24,7 @@ import AICoach from './pages/AICoach';
 import Settings from './pages/Settings';
 import About from './pages/About';
 
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Menu } from 'lucide-react';
 import './App.css';
 
 function MainAppContent() {
@@ -32,9 +33,12 @@ function MainAppContent() {
     settings, 
     loading, 
     activeTab, 
+    setActiveTab,
     setShowQuickAdd, 
     setShowCommandPalette 
   } = useApp();
+
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   if (loading) {
     return (
@@ -99,9 +103,75 @@ function MainAppContent() {
 
   return (
     <div className="app-container">
+      {/* Mobile Top Header Bar */}
+      <div 
+        id="mobile-top-header"
+        className="glass-panel"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          display: 'none',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 1rem',
+          zIndex: 90,
+          background: 'var(--bg-sidebar)',
+          borderBottom: '1px solid var(--border-color)'
+        }}
+      >
+        <div 
+          onClick={() => setActiveTab('about')}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}
+        >
+          <img 
+            src="/favicon.svg" 
+            alt="DAILY TRACKER" 
+            style={{ width: '32px', height: '32px', borderRadius: '10px' }} 
+          />
+          <span style={{
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 800,
+            fontSize: '1.1rem',
+            background: 'linear-gradient(90deg, #ffffff, var(--accent-primary), var(--accent-purple))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            DAILY TRACKER
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            onClick={() => setShowCommandPalette(true)}
+            style={{
+              padding: '0.4rem',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer'
+            }}
+          >
+            <Search size={20} />
+          </button>
+
+          <button
+            onClick={() => setIsMobileDrawerOpen(true)}
+            style={{
+              padding: '0.4rem',
+              color: 'var(--text-primary)',
+              cursor: 'pointer'
+            }}
+          >
+            <Menu size={22} />
+          </button>
+        </div>
+      </div>
+
       {/* Navigation Layout */}
       <Sidebar />
-      <BottomNav />
+      <BottomNav onOpenDrawer={() => setIsMobileDrawerOpen(true)} />
+      <MobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} />
 
       {/* Main viewport area */}
       <main className="main-content">

@@ -306,6 +306,11 @@ a {
   filter: blur(4px);
 }
 
+@keyframes slideRight {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
 /* Responsive Hide/Show Navs & Layout Adjustments */
 @media (max-width: 1024px) {
   aside {
@@ -314,9 +319,12 @@ a {
   #mobile-bottom-nav {
     display: flex !important;
   }
+  #mobile-top-header {
+    display: flex !important;
+  }
   .main-content {
     margin-left: 0 !important;
-    padding: 1.5rem 1.25rem 95px 1.25rem !important;
+    padding: 75px 1.25rem 95px 1.25rem !important;
   }
   #desktop-floating-actions {
     bottom: 85px !important;

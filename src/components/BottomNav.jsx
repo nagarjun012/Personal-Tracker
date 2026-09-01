@@ -5,10 +5,10 @@ import {
   Sun, 
   Plus, 
   BarChart3, 
-  Settings 
+  Menu 
 } from 'lucide-react';
 
-export default function BottomNav() {
+export default function BottomNav({ onOpenDrawer }) {
   const { activeTab, setActiveTab, setShowQuickAdd, user } = useApp();
 
   if (!user) return null;
@@ -25,7 +25,7 @@ export default function BottomNav() {
       left: 0,
       right: 0,
       height: '70px',
-      display: 'none', // Shown only on mobile in CSS (media query)
+      display: 'none', // Shown only on mobile in CSS
       alignItems: 'center',
       justifyContent: 'space-around',
       borderRadius: '0',
@@ -111,20 +111,20 @@ export default function BottomNav() {
       </button>
 
       <button
-        onClick={() => setActiveTab('settings')}
+        onClick={onOpenDrawer}
         style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: '4px',
-          color: activeTab === 'settings' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+          color: 'var(--text-tertiary)',
           fontSize: '0.75rem',
-          fontWeight: activeTab === 'settings' ? 600 : 500,
+          fontWeight: 500,
           cursor: 'pointer'
         }}
       >
-        <Settings size={20} />
-        <span>Profile</span>
+        <Menu size={20} />
+        <span>Menu</span>
       </button>
     </nav>
   );
