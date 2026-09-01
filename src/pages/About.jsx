@@ -16,7 +16,8 @@ import {
   Globe,
   Award,
   Crown,
-  Code2
+  Code2,
+  Mail
 } from 'lucide-react';
 import { api } from '../utils/api';
 
@@ -177,9 +178,32 @@ export default function About() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '20px', color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
-          <Award size={16} />
-          <span>Verified Official Release</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '20px', color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
+            <Award size={16} />
+            <span>Verified Official Release</span>
+          </div>
+
+          <a 
+            href="mailto:nagarjunarjun612@gmail.com"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'rgba(99, 102, 241, 0.15)',
+              border: '1px solid rgba(99, 102, 241, 0.35)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--accent-primary)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'transform 0.2s ease, background 0.2s ease'
+            }}
+          >
+            <Mail size={16} />
+            <span>For Queries: nagarjunarjun612@gmail.com</span>
+          </a>
         </div>
       </div>
 
