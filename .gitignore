@@ -27,3 +27,6 @@ dist-ssr
 tracker.db
 tracker.db-journal
 
+# Test snapshots
+.playwright-mcp/
+
