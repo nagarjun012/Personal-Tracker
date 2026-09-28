@@ -21,8 +21,8 @@ export function DonutChart({ data = [], size = 180, strokeWidth = 24 }) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', width: '100%', flexWrap: 'wrap' }}>
-      <div style={{ position: 'relative', width: size, height: size }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', width: '100%', flexWrap: 'wrap' }}>
+      <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
           {data.map((item, idx) => {
             const percent = (item.value / total) * 100;
@@ -138,8 +138,6 @@ export function LineChart({ data = [], width = 500, height = 220 }) {
     return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>No historical scores.</div>;
   }
 
-  // Find min/max values to scale chart
-  const scores = data.map(d => d.score);
   const maxVal = 100; // Scores are capped at 100
   const minVal = 0;
 
@@ -148,8 +146,9 @@ export function LineChart({ data = [], width = 500, height = 220 }) {
   const graphHeight = height - padding.top - padding.bottom;
 
   // Map data coordinates
+  const divisor = data.length > 1 ? data.length - 1 : 1;
   const points = data.map((d, index) => {
-    const x = padding.left + (index / (data.length - 1)) * graphWidth;
+    const x = padding.left + (data.length === 1 ? graphWidth / 2 : (index / divisor) * graphWidth);
     const y = padding.top + graphHeight - ((d.score - minVal) / (maxVal - minVal)) * graphHeight;
     return { x, y, score: d.score, label: d.date };
   });
@@ -174,8 +173,8 @@ export function LineChart({ data = [], width = 500, height = 220 }) {
   }
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto' }}>
-      <svg width={width} height={height} style={{ overflow: 'visible' }}>
+    <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%', maxHeight: `${height}px`, overflow: 'visible' }}>
         <defs>
           <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.3" />
@@ -320,8 +319,8 @@ export function BarChart({ data = [], width = 500, height = 220 }) {
   const gap = (graphWidth - barWidth * data.length) / (data.length - 1 || 1);
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto' }}>
-      <svg width={width} height={height}>
+    <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} style={{ width: '100%', height: 'auto', display: 'block', maxWidth: '100%', maxHeight: `${height}px` }}>
         {/* Horizontal grid guide */}
         {[0, 0.5, 1].map((ratio, idx) => {
           const y = padding.top + graphHeight - ratio * graphHeight;
@@ -426,22 +425,20 @@ export function HabitHeatmap({ logs = [] }) {
   const [hoveredDay, setHoveredDay] = useState(null);
 
   // Generate matrix: 53 columns by 7 rows representing the last 365 days
-  // Let's create an array of days backwards from today
   const cols = 53;
   const rows = 7;
   const totalCells = cols * rows;
 
-  const datesList = [];
   const today = new Date();
-  
-  // Align cells to end on today's day of week (so today is at the bottom right)
   const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
-  const daysOffset = dayOfWeek; // cells left in final column
+  const daysToSaturday = 6 - dayOfWeek;
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() + daysToSaturday - (totalCells - 1));
 
-  // Shift dates backward to match the grid size
-  for (let i = totalCells - 1 - (6 - daysOffset); i >= -daysOffset; i--) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
+  const datesList = [];
+  for (let i = 0; i < totalCells; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
     datesList.push(d.toLocaleDateString('sv'));
   }
 
@@ -498,7 +495,7 @@ export function HabitHeatmap({ logs = [] }) {
       )}
 
       {/* Grid wrapper */}
-      <div style={{ overflowX: 'auto', display: 'flex', padding: '0.5rem 0', width: '100%' }}>
+      <div className="scroll-touch" style={{ overflowX: 'auto', display: 'flex', padding: '0.5rem 0', width: '100%', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', gap: '3px' }}>
           {grid.map((col, colIdx) => (
             <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
