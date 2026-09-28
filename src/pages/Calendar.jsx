@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 
 export default function Calendar() {
-  const { addToast } = useApp();
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 9)); // Default to seeded date (Aug 9, 2026)
+  const { addToast, dataRevision } = useApp();
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   
   // Dynamic Month data
   const [tasks, setTasks] = useState([]);
@@ -43,7 +43,7 @@ export default function Calendar() {
 
   useEffect(() => {
     fetchMonthData();
-  }, []);
+  }, [dataRevision]);
 
   // Load complete day history details when clicking cell
   const handleDateClick = async (dateStr) => {
@@ -74,14 +74,14 @@ export default function Calendar() {
       const dayActivities = await api.get(`/api/activities?date=${dateStr}`);
 
       setScorecard({
-        score: scoreRes.calculated.score,
-        breakdown: scoreRes.calculated.breakdown,
-        savedReview: scoreRes.savedReview,
-        journal: journalRes.length > 0 ? journalRes[0] : null,
-        mood: moodRes.length > 0 ? moodRes[0] : null,
+        score: scoreRes?.calculated?.score || 0,
+        breakdown: scoreRes?.calculated?.breakdown || {},
+        savedReview: scoreRes?.savedReview || null,
+        journal: Array.isArray(journalRes) && journalRes.length > 0 ? journalRes[0] : null,
+        mood: Array.isArray(moodRes) && moodRes.length > 0 ? moodRes[0] : null,
         tasks: dayTasks,
         habits: dayHabits,
-        activities: dayActivities
+        activities: Array.isArray(dayActivities) ? dayActivities : []
       });
 
     } catch (err) {
@@ -98,6 +98,10 @@ export default function Calendar() {
 
   const nextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
   };
 
   // Calendar math functions
@@ -158,7 +162,14 @@ export default function Calendar() {
           <p style={{ color: 'var(--text-secondary)' }}>Browse schedule milestones and review past scorecards.</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button 
+            onClick={goToToday} 
+            className="btn-secondary" 
+            style={{ padding: '0.5rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600 }}
+          >
+            Today
+          </button>
           <span style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </span>
@@ -178,14 +189,17 @@ export default function Calendar() {
         {/* Days of week */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <span key={d} style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{d}</span>
+            <span key={d} style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              <span className="desktop-only-inline">{d}</span>
+              <span className="mobile-only-inline">{d[0]}</span>
+            </span>
           ))}
         </div>
 
         {/* Calendar days cells */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+        <div className="calendar-grid-container">
           {calendarCells.map((cell, idx) => {
-            const dateStr = cell.date.toISOString().split('T')[0];
+            const dateStr = cell.date.toLocaleDateString('sv');
             const isToday = dateStr === new Date().toLocaleDateString('sv');
             const metrics = getDayMetrics(dateStr);
 
@@ -193,6 +207,7 @@ export default function Calendar() {
               <div
                 key={idx}
                 onClick={() => handleDateClick(dateStr)}
+                className="calendar-cell"
                 style={{
                   minHeight: '90px',
                   borderRadius: 'var(--radius-sm)',
@@ -216,7 +231,7 @@ export default function Calendar() {
                 }}
               >
                 {/* Cell Number */}
-                <span style={{ 
+                <span className="calendar-cell-date" style={{ 
                   fontSize: '0.85rem', 
                   fontWeight: isToday ? 800 : 600, 
                   color: isToday ? 'var(--accent-primary)' : 'var(--text-primary)',
@@ -234,7 +249,7 @@ export default function Calendar() {
                 {/* Event Dots/Indicators */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '0.5rem' }}>
                   {metrics.tasksCount > 0 && (
-                    <span style={{ 
+                    <span className="calendar-cell-badge" style={{ 
                       fontSize: '0.65rem', 
                       backgroundColor: 'rgba(99,102,241,0.1)', 
                       color: 'var(--accent-primary)',
@@ -244,12 +259,12 @@ export default function Calendar() {
                       whiteSpace: 'nowrap',
                       overflow: 'hidden'
                     }}>
-                      📝 {metrics.tasksCompleted}/{metrics.tasksCount} Tasks
+                      📝 {metrics.tasksCompleted}/{metrics.tasksCount} <span className="desktop-only-inline">Tasks</span>
                     </span>
                   )}
 
                   {metrics.habitsCount > 0 && (
-                    <span style={{ 
+                    <span className="calendar-cell-badge" style={{ 
                       fontSize: '0.65rem', 
                       backgroundColor: 'rgba(245,158,11,0.1)', 
                       color: 'var(--accent-amber)',
@@ -259,7 +274,7 @@ export default function Calendar() {
                       whiteSpace: 'nowrap',
                       overflow: 'hidden'
                     }}>
-                      🔥 {metrics.habitsCount} Habits
+                      🔥 {metrics.habitsCount} <span className="desktop-only-inline">Habits</span>
                     </span>
                   )}
                 </div>
