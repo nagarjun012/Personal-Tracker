@@ -8,16 +8,14 @@ import {
   Plus, 
   Flame, 
   Award, 
-  Calendar,
-  CheckCircle,
-  Clock,
-  Sparkles,
-  Smile,
-  Trash2
+  Calendar, 
+  CheckCircle, 
+  Clock, 
+  Trash2 
 } from 'lucide-react';
 
 export default function Habits() {
-  const { refreshXp, addToast } = useApp();
+  const { refreshXp, addToast, dataRevision, notifyDataChanged } = useApp();
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +42,7 @@ export default function Habits() {
 
   useEffect(() => {
     fetchHabits();
-  }, []);
+  }, [dataRevision]);
 
   // Generate last 7 dates for the weekly tracking grid
   const getWeeklyDates = () => {
@@ -75,6 +73,7 @@ export default function Habits() {
       );
       fetchHabits();
       refreshXp();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to log habit.', 'error');
     }
@@ -97,6 +96,7 @@ export default function Habits() {
       setIsAddOpen(false);
       setName('');
       fetchHabits();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to create habit.', 'error');
     }
@@ -108,6 +108,7 @@ export default function Habits() {
       await api.delete(`/api/habits/${id}`);
       addToast('Habit deleted.', 'info');
       fetchHabits();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to delete habit.', 'error');
     }
@@ -162,7 +163,7 @@ export default function Habits() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Weekly Tracker Grid card */}
-          <Card style={{ overflowX: 'auto', padding: '1.5rem' }}>
+          <Card className="scroll-touch" style={{ overflowX: 'auto', padding: 'clamp(1rem, 2.5vw, 1.5rem)', WebkitOverflowScrolling: 'touch' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
               <Calendar size={18} style={{ color: 'var(--accent-primary)' }} />
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Weekly Log Checklist</h3>
@@ -253,7 +254,7 @@ export default function Habits() {
 
                     {/* Streak & stats readout */}
                     <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justify: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 600, color: 'var(--accent-amber)' }}>
                           <Flame size={12} />
                           {h.currentStreak}
@@ -306,7 +307,7 @@ export default function Habits() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Icon Style</label>
               <select value={icon} onChange={(e) => setIcon(e.target.value)} className="input-field">
@@ -338,7 +339,7 @@ export default function Habits() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Daily Target Quantity</label>
               <input

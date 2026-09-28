@@ -14,12 +14,11 @@ import {
   AlertCircle, 
   Tag, 
   ChevronDown, 
-  ChevronUp,
-  FileText
+  ChevronUp
 } from 'lucide-react';
 
 export default function Tasks() {
-  const { refreshXp, addToast } = useApp();
+  const { refreshXp, addToast, dataRevision, notifyDataChanged } = useApp();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -60,7 +59,7 @@ export default function Tasks() {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [dataRevision]);
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
@@ -97,6 +96,7 @@ export default function Tasks() {
       resetForm();
       fetchTasks();
       refreshXp();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to create task.', 'error');
     }
@@ -127,6 +127,7 @@ export default function Tasks() {
       addToast(isCompleted ? 'Task reopened.' : 'Task completed! +10 XP earned! ⭐', 'success');
       fetchTasks();
       refreshXp();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to update task.', 'error');
     }
@@ -138,6 +139,7 @@ export default function Tasks() {
       await api.delete(`/api/tasks/${taskId}`);
       addToast('Task deleted.', 'info');
       fetchTasks();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to delete task.', 'error');
     }
@@ -158,6 +160,7 @@ export default function Tasks() {
       });
       addToast('Subtask added.', 'success');
       fetchTasks();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to add subtask.', 'error');
     }
@@ -179,17 +182,17 @@ export default function Tasks() {
       // 3. Status Filters
       if (statusFilter === 'Completed' && t.status !== 'Completed') return false;
       if (statusFilter === 'today' && t.due_date !== todayStr) return false;
-      if (statusFilter === 'high-priority' && t.priority !== 'high') return false;
+      if (statusFilter === 'high-priority' && t.priority?.toLowerCase() !== 'high') return false;
       if (statusFilter === 'upcoming') {
         if (!t.due_date || t.due_date <= todayStr || t.status === 'Completed') return false;
       }
-      if (statusFilter === 'all' && t.status === 'Completed' && t.parent_task_id === null) {
+      if (statusFilter === 'all' && t.status === 'Completed' && !t.parent_task_id) {
         // By default, hide completed parent tasks from the main list unless explicitly viewing completed
         return false;
       }
 
       // Hide subtasks from parent mapping list (they are loaded nested)
-      if (t.parent_task_id !== null) return false;
+      if (t.parent_task_id) return false;
 
       return true;
     })
@@ -197,7 +200,9 @@ export default function Tasks() {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'priority') {
         const priorityVal = { high: 3, medium: 2, low: 1 };
-        return priorityVal[b.priority] - priorityVal[a.priority];
+        const pA = priorityVal[a.priority?.toLowerCase()] || 2;
+        const pB = priorityVal[b.priority?.toLowerCase()] || 2;
+        return pB - pA;
       }
       // due date sorting
       if (!a.due_date) return 1;
@@ -211,8 +216,9 @@ export default function Tasks() {
   };
 
   const getPriorityColor = (p) => {
-    if (p === 'high') return 'var(--accent-red)';
-    if (p === 'medium') return 'var(--accent-amber)';
+    const val = p?.toLowerCase();
+    if (val === 'high') return 'var(--accent-red)';
+    if (val === 'medium') return 'var(--accent-amber)';
     return 'var(--accent-blue)';
   };
 
@@ -272,7 +278,7 @@ export default function Tasks() {
         </div>
 
         {/* Tab Filters */}
-        <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '2px' }}>
+        <div className="scroll-touch" style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '2px', WebkitOverflowScrolling: 'touch' }}>
           {[
             { id: 'all', name: 'Active' },
             { id: 'today', name: 'Today' },
@@ -442,7 +448,7 @@ export default function Tasks() {
                   {/* Actions buttons */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {/* Subtasks dropdown toggle */}
-                    {(hasSubtasks || true) && (
+                    {(hasSubtasks || isExpanded) && (
                       <button 
                         onClick={() => toggleExpand(task.id)}
                         className="btn-secondary"
@@ -484,7 +490,7 @@ export default function Tasks() {
                     {hasSubtasks && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {subtasks.map(sub => (
-                          <div key={sub.id} style={{ display: 'flex', alignItems: 'center', justify: 'space-between', gap: '0.75rem' }}>
+                          <div key={sub.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <button
                                 onClick={() => handleToggleComplete(sub)}
@@ -570,7 +576,7 @@ export default function Tasks() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Priority</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value)} className="input-field">
@@ -593,7 +599,7 @@ export default function Tasks() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Due Date</label>
               <input
@@ -615,7 +621,7 @@ export default function Tasks() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Est Duration (mins)</label>
               <input

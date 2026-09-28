@@ -5,18 +5,14 @@ import { Card } from '../components/Card';
 import Modal from '../components/Modal';
 import { 
   Plus, 
-  Target, 
   Trash2, 
   CheckSquare, 
   Square, 
-  Calendar,
-  AlertCircle,
-  TrendingUp,
-  Award
+  Calendar
 } from 'lucide-react';
 
 export default function Goals() {
-  const { refreshXp, addToast } = useApp();
+  const { refreshXp, addToast, dataRevision, notifyDataChanged } = useApp();
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -47,7 +43,7 @@ export default function Goals() {
 
   useEffect(() => {
     fetchGoals();
-  }, []);
+  }, [dataRevision]);
 
   const handleCreateGoal = async (e) => {
     e.preventDefault();
@@ -68,6 +64,7 @@ export default function Goals() {
       setIsAddOpen(false);
       resetForm();
       fetchGoals();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to create goal.', 'error');
     }
@@ -98,6 +95,7 @@ export default function Goals() {
       );
       fetchGoals();
       refreshXp();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to update milestone.', 'error');
     }
@@ -109,27 +107,9 @@ export default function Goals() {
       await api.delete(`/api/goals/${id}`);
       addToast('Goal removed.', 'info');
       fetchGoals();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to delete goal.', 'error');
-    }
-  };
-
-  const handleAddMilestoneInline = async (goalId, milestoneTitle) => {
-    if (!milestoneTitle.trim()) return;
-    try {
-      // Create new milestone in DB
-      // We can use a custom sub-endpoint if exposed, or PUT/POST.
-      // Since server.js doesn't have an explicit POST /api/goals/milestones, but we can update milestones or recreate them.
-      // Wait! Let's check server.js. In server.js, we don't have a direct endpoint to POST a milestone, but we can add it to the DB directly.
-      // Wait, is there a way to add milestones inline, or should we edit the goal?
-      // Let's edit the goal or look at the DB operations in server.js.
-      // Ah! In server.js, we have: `PUT /api/goals/milestones/:id` to toggle milestone status.
-      // Wait! What if we want to add a milestone? In server.js we don't have a direct endpoint for that, but we can easily add one if needed, or we can just let the user edit the goal. Let's make it so that the user creates milestones during goal creation. If they want to add one, let's keep it simple or we can add the endpoint in server.js.
-      // Let's check: yes, it is simpler if they create them on startup, but having an inline milestone adder is extremely nice!
-      // Wait! Let's add the endpoint `POST /api/goals/milestones` in `server.js` if we want to support inline addition.
-      // Let's see: is it necessary? It is a nice-to-have, but not strictly required. Let's look at the goals page. We can just list milestones, which is the core requirement!
-    } catch (err) {
-      addToast('Failed to add milestone.', 'error');
     }
   };
 
@@ -166,14 +146,16 @@ export default function Goals() {
       </div>
 
       {/* Timeframe Tab filters */}
-      <div className="glass-panel" style={{
-        padding: '0.5rem',
+      <div className="glass-panel scroll-touch" style={{
+        padding: '0.4rem',
         borderRadius: 'var(--radius-md)',
         background: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
         display: 'flex',
         gap: '0.35rem',
-        width: 'max-content'
+        maxWidth: '100%',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {[
           { id: 'daily', name: 'Daily' },
@@ -221,8 +203,8 @@ export default function Goals() {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '1.5rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.25rem'
         }}>
           {filteredGoals.map(goal => (
             <Card key={goal.id} hoverable={false} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -259,7 +241,7 @@ export default function Goals() {
 
               {/* Progress bar */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Goal Progress</span>
                   <span style={{ color: 'var(--accent-primary)' }}>{goal.progress}%</span>
                 </div>
@@ -359,7 +341,7 @@ export default function Goals() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Goal Period</label>
               <select value={type} onChange={(e) => setType(e.target.value)} className="input-field">
