@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import { 
   ShieldCheck, 
   Database, 
-  Cpu, 
   Sparkles, 
   CheckCircle2, 
   Download, 
@@ -11,18 +10,14 @@ import {
   Target, 
   Timer, 
   BookOpen, 
-  BarChart3, 
-  Zap,
-  Globe,
-  Award,
-  Crown,
-  Code2,
+  Award, 
+  Crown, 
   Mail
 } from 'lucide-react';
 import { api } from '../utils/api';
 
 export default function About() {
-  const { user, addToast } = useApp();
+  const { addToast } = useApp();
 
   const handleExport = async () => {
     try {
@@ -83,7 +78,7 @@ export default function About() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }} className="animate-fade">
       {/* Brand Hero Header */}
       <div className="glass-panel" style={{
-        padding: '2.5rem',
+        padding: 'clamp(1.5rem, 4vw, 2.5rem)',
         borderRadius: 'var(--radius-lg)',
         background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08), rgba(236, 72, 153, 0.05))',
         border: '1px solid var(--border-color)',
@@ -136,7 +131,7 @@ export default function About() {
 
       {/* Creator & Architect Credit Card */}
       <div className="glass-panel hover-lift" style={{
-        padding: '2rem 2.5rem',
+        padding: 'clamp(1.25rem, 3.5vw, 2rem) clamp(1.25rem, 4vw, 2.5rem)',
         borderRadius: 'var(--radius-lg)',
         background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.05))',
         border: '1px solid rgba(99, 102, 241, 0.3)',
@@ -236,7 +231,7 @@ export default function About() {
       </div>
 
       {/* System Specifications & Architecture */}
-      <div className="glass-panel" style={{ padding: '2rem', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="glass-panel" style={{ padding: 'clamp(1.25rem, 3.5vw, 2rem)', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ShieldCheck size={20} color="var(--accent-primary)" />
           Privacy & Security Standards

@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 
 export default function Settings() {
-  const { settings, updateSettings, logout, user, addToast } = useApp();
+  const { settings, updateSettings, logout, user, addToast, updateProfileName } = useApp();
 
   // Local Form state
+  const [profileName, setProfileName] = useState(user?.name || 'Personal Workspace');
   const [theme, setTheme] = useState('system');
   const [notifications, setNotifications] = useState(true);
   const [xpEnabled, setXpEnabled] = useState(true);
@@ -36,6 +37,9 @@ export default function Settings() {
 
   // Sync settings when context loads
   useEffect(() => {
+    if (user?.name) {
+      setProfileName(user.name);
+    }
     if (settings) {
       setTheme(settings.theme);
       setNotifications(settings.notifications_enabled === 1);
@@ -52,7 +56,7 @@ export default function Settings() {
         setSchedW(settings.score_weights.schedule || 15);
       }
     }
-  }, [settings]);
+  }, [settings, user]);
 
   const totalWeights = parseInt(tasksW) + parseInt(habitsW) + parseInt(goalsW) + parseInt(timeW) + parseInt(schedW);
   const weightsValid = totalWeights === 100;
@@ -79,6 +83,10 @@ export default function Settings() {
       sleep_time: sleepTime,
       main_focus: focus
     };
+
+    if (profileName && profileName.trim() !== user?.name) {
+      await updateProfileName(profileName);
+    }
 
     await updateSettings(payload);
   };
@@ -158,18 +166,17 @@ export default function Settings() {
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
         {/* Save Bar Banner */}
-        <div className="glass-panel" style={{
+        <div className="glass-panel settings-sticky-bar" style={{
           padding: '1rem 1.5rem',
           borderRadius: 'var(--radius-md)',
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          position: 'sticky',
-          top: '20px',
-          zIndex: 50,
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
-          boxShadow: 'var(--shadow-md)'
+          boxShadow: 'var(--shadow-md)',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
             {!weightsValid ? (
@@ -190,10 +197,10 @@ export default function Settings() {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+        <div className="settings-grid">
           
           {/* Main Config Column */}
-          <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="settings-main">
             
             {/* User Profile Card */}
             <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -224,7 +231,18 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0, marginTop: '0.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0, marginTop: '0.75rem' }}>
+                <label>Profile / Display Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. My Workspace or Your Name"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="input-field"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0, marginTop: '0.75rem' }}>
                 <label>Main Focus / Primary Goal Statement</label>
                 <input
                   type="text"
@@ -252,7 +270,7 @@ export default function Settings() {
                 Customize how your daily productivity score is calculated based on personal priorities.
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+              <div className="responsive-grid-2">
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Tasks Weight ({tasksW}%)</label>
                   <input
@@ -301,7 +319,7 @@ export default function Settings() {
                   />
                 </div>
 
-                <div className="form-group" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+                <div className="form-group" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
                   <label>Schedule Adherence Weight ({schedW}%)</label>
                   <input
                     type="number"
@@ -321,7 +339,7 @@ export default function Settings() {
                 Daily Routine Target Hours
               </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+              <div className="responsive-grid-2">
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Wake-Up Target Time</label>
                   <input
@@ -346,7 +364,7 @@ export default function Settings() {
           </div>
 
           {/* Right Column Config */}
-          <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="settings-side">
             
             {/* Theme Config */}
             <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -410,7 +428,7 @@ export default function Settings() {
                 type="button"
                 onClick={handleExportJSON}
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem' }}
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
               >
                 <Download size={14} />
                 Export JSON Backup
@@ -418,7 +436,7 @@ export default function Settings() {
 
               <label 
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', marginBottom: 0 }}
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', marginBottom: 0 }}
               >
                 <Upload size={14} />
                 Import JSON Backup
@@ -429,7 +447,7 @@ export default function Settings() {
                 type="button"
                 onClick={handleResetAllData}
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--accent-amber)', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--accent-amber)', borderColor: 'rgba(245, 158, 11, 0.3)' }}
               >
                 <RotateCcw size={14} />
                 Reset All Data to Default
@@ -439,7 +457,7 @@ export default function Settings() {
                 type="button"
                 onClick={handleDeleteAccount}
                 className="btn btn-danger"
-                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justify: 'center', gap: '6px', fontSize: '0.85rem' }}
+                style={{ width: '100%', padding: '0.6rem 0.8rem', display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
               >
                 <Trash2 size={14} />
                 Delete Account

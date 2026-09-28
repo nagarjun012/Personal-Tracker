@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function AICoach() {
-  const { addToast } = useApp();
+  const { addToast, notifyDataChanged } = useApp();
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adopting, setAdopting] = useState(false);
@@ -43,7 +43,7 @@ export default function AICoach() {
       // Adopt for tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const tomorrowStr = tomorrow.toLocaleDateString('sv');
 
       // Fetch tomorrow's activities to check for duplicates
       const existing = await api.get(`/api/activities?date=${tomorrowStr}`);
@@ -67,6 +67,7 @@ export default function AICoach() {
         });
       }
 
+      notifyDataChanged();
       addToast("Tomorrow's schedule adopted successfully! Check your My Day panel. 📅", 'success');
     } catch (err) {
       addToast('Failed to schedule recommended slots.', 'error');
@@ -173,7 +174,7 @@ export default function AICoach() {
 
         {/* Right Column: Recommended schedule for tomorrow */}
         <Card style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Calendar size={16} style={{ color: 'var(--accent-purple)' }} />
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Coached Plan</h3>
@@ -214,7 +215,7 @@ export default function AICoach() {
             className="btn btn-primary"
             style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', gap: '4px', fontSize: '0.85rem' }}
           >
-            Adopt Tomorrow's Schedule
+            {adopting ? 'Adopting Schedule...' : "Adopt Tomorrow's Schedule"}
             <ArrowRight size={14} />
           </button>
         </Card>
