@@ -5,13 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev:frontend": "vite",
-    "dev:backend": "node server.js",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "vite",
     "build": "vite build",
-    "start": "node index.js",
-    "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite",
+    "dev:fullstack": "concurrently \"node server.js\" \"vite\"",
+    "lint": "oxlint"
   },
   "dependencies": {
     "react": "^19.2.8",

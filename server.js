@@ -939,6 +939,18 @@ app.put('/api/time-entries/:id', authenticateToken, (req, res) => {
   }
 });
 
+app.delete('/api/time-entries/:id', authenticateToken, (req, res) => {
+  try {
+    const result = db.prepare('DELETE FROM time_entries WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Time entry not found.' });
+    }
+    res.json({ message: 'Time entry deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete time entry.' });
+  }
+});
+
 // ==========================================
 // JOURNAL ENDPOINTS
 // ==========================================
@@ -1304,8 +1316,6 @@ app.get('/api/analytics', authenticateToken, (req, res) => {
 // ==========================================
 app.get('/api/ai-coach', authenticateToken, (req, res) => {
   try {
-    const todayStr = new Date().toLocaleDateString('sv');
-    
     // Fetch last 7 days metrics
     const startRangeDate = new Date();
     startRangeDate.setDate(startRangeDate.getDate() - 7);
