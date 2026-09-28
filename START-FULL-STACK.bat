@@ -1,11 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
-title DAILY TRACKER - Personal System
+title DAILY TRACKER - Full Stack Launcher
 cd /d "%~dp0"
 
 cls
 echo =======================================================
-echo          DAILY TRACKER - PERSONAL SYSTEM
+echo     DAILY TRACKER - FULL STACK (SQLITE + FRONTEND)
 echo =======================================================
 echo.
 echo [1/2] Checking system environment...
@@ -33,12 +33,14 @@ if not exist "node_modules\" (
     )
 )
 
-echo [2/2] Starting application and opening browser...
+echo [2/2] Starting SQLite server and Vite dev frontend...
 echo.
 echo =======================================================
-echo   * Your browser will open automatically once ready
+echo   * Backend: http://localhost:3000
+echo   * Frontend: http://localhost:5173
+echo   * Browser will open automatically once ready
 echo   * Press Ctrl+C in this window anytime to stop
 echo =======================================================
 echo.
 
-call npx.cmd vite --open
+call npm.cmd run dev
