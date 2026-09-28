@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export default function Modal({ isOpen, onClose, title, children, maxWidth = '500px' }) {
@@ -21,7 +22,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '50
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
@@ -29,11 +30,12 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '50
         inset: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem',
+        padding: 'clamp(0.65rem, 3vw, 1.5rem)',
         animation: 'fadeIn 0.2s ease-out'
       }}
     >
@@ -42,7 +44,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '50
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth,
+          maxWidth: `min(${maxWidth}, calc(100vw - 1.5rem))`,
           backgroundColor: 'var(--bg-secondary)',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border-color)',
@@ -50,43 +52,50 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '50
           display: 'flex',
           flexDirection: 'column',
           animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          maxHeight: '90vh',
+          maxHeight: '92vh',
           overflow: 'hidden'
         }}
       >
         {/* Header */}
         <div style={{
-          padding: '1.25rem 1.5rem',
+          padding: '1rem clamp(1rem, 3vw, 1.5rem)',
           borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexShrink: 0
         }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{title}</h3>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{title}</h3>
           <button
             onClick={onClose}
             style={{
-              padding: '0.25rem',
+              padding: '0.4rem',
               borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
-              color: 'var(--text-tertiary)'
+              color: 'var(--text-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
-            className="btn-secondary"
+            className="btn-secondary touch-target"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content body */}
-        <div style={{
-          padding: '1.5rem',
-          overflowY: 'auto',
-          flex: 1
-        }}>
+        <div 
+          className="scroll-touch"
+          style={{
+            padding: 'clamp(1rem, 3vw, 1.5rem)',
+            overflowY: 'auto',
+            flex: 1
+          }}
+        >
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
