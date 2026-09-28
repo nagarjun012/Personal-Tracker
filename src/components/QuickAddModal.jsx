@@ -6,16 +6,12 @@ import {
   CheckSquare, 
   Flame, 
   Target, 
-  BookOpen, 
   Calendar, 
-  Smile, 
-  Battery, 
-  Save, 
-  Sparkles 
+  Smile 
 } from 'lucide-react';
 
 export default function QuickAddModal() {
-  const { showQuickAdd, setShowQuickAdd, refreshXp, addToast } = useApp();
+  const { showQuickAdd, setShowQuickAdd, refreshXp, addToast, notifyDataChanged } = useApp();
   const [activeTab, setActiveTab] = useState('task'); // 'task', 'habit', 'goal', 'activity', 'mood'
 
   // 1. Task Form State
@@ -83,6 +79,10 @@ export default function QuickAddModal() {
         addToast('Goal tracker created! 🎯', 'success');
       } else if (activeTab === 'activity') {
         if (!actTitle.trim()) return;
+        if (actStart >= actEnd) {
+          addToast('End time must be after start time.', 'warning');
+          return;
+        }
         await api.post('/api/activities', {
           title: actTitle,
           start_time: actStart,
@@ -101,6 +101,7 @@ export default function QuickAddModal() {
         refreshXp();
       }
 
+      notifyDataChanged();
       setShowQuickAdd(false);
       resetForms();
     } catch (err) {

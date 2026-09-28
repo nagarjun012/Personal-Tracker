@@ -10,7 +10,8 @@ import {
   Target, 
   BookOpen,
   Settings,
-  Calendar
+  Calendar,
+  Clock
 } from 'lucide-react';
 
 export default function CommandPalette() {
@@ -64,7 +65,7 @@ export default function CommandPalette() {
         const res = await api.get(`/api/search?q=${query}`);
         // Combine nav shortcuts + search matches
         const localFiltered = navCommands.filter(c => c.title.toLowerCase().includes(query.toLowerCase()));
-        setResults([...localFiltered, ...res.results]);
+        setResults([...localFiltered, ...(res.results || [])]);
       } catch (err) {
         console.error('Palette search failure:', err);
       }
@@ -101,7 +102,7 @@ export default function CommandPalette() {
   const triggerAction = (cmd) => {
     if (cmd.type === 'nav') {
       setActiveTab(cmd.tab);
-      addToast(`Navigated to ${cmd.title.split('Go to ')[1]}`, 'info');
+      addToast(`Navigated to ${cmd.title.replace(/^Go to /, '')}`, 'info');
     } else {
       // Search matches navigation
       if (cmd.type === 'task') {
@@ -269,26 +270,5 @@ export default function CommandPalette() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Simple clock icon definition fallback for command palette
-function Clock({ size, style }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      style={style}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
   );
 }
