@@ -13,12 +13,11 @@ import {
   Calendar,
   ChevronRight,
   TrendingUp,
-  Award,
   ArrowRight
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, settings, setActiveTab, addToast } = useApp();
+  const { user, settings, setActiveTab, dataRevision } = useApp();
   const [data, setData] = useState(null);
   const [coachInsight, setCoachInsight] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +77,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [dataRevision]);
 
   // 1. Greeting string
   const getGreeting = () => {
@@ -93,14 +92,28 @@ export default function Dashboard() {
     const wake = settings?.wake_time || '07:00';
     const sleep = settings?.sleep_time || '22:30';
 
-    const [wakeH, wakeM] = wake.split(':').map(Number);
-    const [sleepH, sleepM] = sleep.split(':').map(Number);
+    let [wakeH, wakeM] = (wake || '07:00').split(':').map(Number);
+    let [sleepH, sleepM] = (sleep || '22:30').split(':').map(Number);
+    if (isNaN(wakeH)) wakeH = 7;
+    if (isNaN(wakeM)) wakeM = 0;
+    if (isNaN(sleepH)) sleepH = 22;
+    if (isNaN(sleepM)) sleepM = 30;
 
-    const totalMin = (sleepH * 60 + sleepM) - (wakeH * 60 + wakeM);
-    if (totalMin <= 0) return 50; // Fallback
+    const wakeMinutes = wakeH * 60 + wakeM;
+    let sleepMinutes = sleepH * 60 + sleepM;
+    if (sleepMinutes <= wakeMinutes) {
+      sleepMinutes += 24 * 60;
+    }
 
-    const currentMin = (currentTime.getHours() * 60 + currentTime.getMinutes()) - (wakeH * 60 + wakeM);
-    
+    const totalMin = sleepMinutes - wakeMinutes;
+    if (totalMin <= 0) return 50;
+
+    let nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    if (nowMinutes < wakeMinutes && sleepMinutes > 24 * 60 && nowMinutes <= (sleepMinutes - 24 * 60)) {
+      nowMinutes += 24 * 60;
+    }
+
+    const currentMin = nowMinutes - wakeMinutes;
     if (currentMin <= 0) return 0;
     if (currentMin >= totalMin) return 100;
     
@@ -142,7 +155,8 @@ export default function Dashboard() {
   ];
 
   // Habits completed today count
-  const habitsCompletedCount = data.habits.filter(h => {
+  const habitsList = Array.isArray(data?.habits) ? data.habits : [];
+  const habitsCompletedCount = habitsList.filter(h => {
     const todayStr = new Date().toLocaleDateString('sv');
     const loggedToday = h.logs?.find(l => l.date === todayStr);
     return loggedToday && loggedToday.status === 'completed';
@@ -163,7 +177,7 @@ export default function Dashboard() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>
-            {getGreeting()}, {user?.name.split(' ')[0]} 👋
+            {getGreeting()}, {user?.name ? user.name.split(' ')[0] : 'User'} 👋
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
             <Calendar size={16} />
@@ -215,8 +229,8 @@ export default function Dashboard() {
       {/* 2. Top Stats row (Productivity, Tasks, Habits) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-        gap: '1.5rem'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '1rem'
       }}>
         {/* Productivity score card */}
         <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem' }}>
@@ -236,7 +250,7 @@ export default function Dashboard() {
         {/* Today's Tasks completed */}
         <Card 
           onClick={() => setActiveTab('tasks')}
-          style={{ display: 'flex', flexDirection: 'column', justify: 'space-between', padding: '1.25rem 1.5rem' }}
+          style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.25rem 1.5rem' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -270,7 +284,7 @@ export default function Dashboard() {
         {/* Habits Progress card */}
         <Card 
           onClick={() => setActiveTab('habits')}
-          style={{ display: 'flex', flexDirection: 'column', justify: 'space-between', padding: '1.25rem 1.5rem' }}
+          style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.25rem 1.5rem' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>

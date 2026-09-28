@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function MyDay() {
-  const { settings, refreshXp, addToast } = useApp();
+  const { settings, refreshXp, addToast, dataRevision, notifyDataChanged } = useApp();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date().toLocaleDateString('sv'));
@@ -47,7 +47,7 @@ export default function MyDay() {
 
   useEffect(() => {
     fetchActivities();
-  }, [activeDate]);
+  }, [activeDate, dataRevision]);
 
   const handleCreateActivity = async (e) => {
     e.preventDefault();
@@ -75,6 +75,7 @@ export default function MyDay() {
       setIsAddOpen(false);
       resetForm();
       fetchActivities();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to schedule activity.', 'error');
     }
@@ -105,6 +106,7 @@ export default function MyDay() {
         addToast('Activity marked incomplete.', 'info');
       }
       fetchActivities();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to update activity.', 'error');
     }
@@ -116,6 +118,7 @@ export default function MyDay() {
       await api.delete(`/api/activities/${id}`);
       addToast('Activity removed.', 'info');
       fetchActivities();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to delete activity.', 'error');
     }
@@ -124,12 +127,28 @@ export default function MyDay() {
   const wakeTime = settings?.wake_time || '07:00';
   const sleepTime = settings?.sleep_time || '22:30';
 
-  const wakeHour = parseInt(wakeTime.split(':')[0]);
-  const sleepHour = parseInt(sleepTime.split(':')[0]);
+  let wakeHour = parseInt(wakeTime.split(':')[0], 10);
+  let sleepHour = parseInt(sleepTime.split(':')[0], 10);
+  if (isNaN(wakeHour)) wakeHour = 7;
+  if (isNaN(sleepHour)) sleepHour = 23;
 
-  // Generate Hour blocks for the visual timeline
+  // Determine timeline hours dynamically to encompass user settings and all scheduled activities
+  let minHour = Math.min(wakeHour, 7);
+  let maxHour = Math.max(sleepHour, 22);
+
+  activities.forEach(act => {
+    if (act.start_time) {
+      const h = parseInt(act.start_time.split(':')[0], 10);
+      if (!isNaN(h)) minHour = Math.min(minHour, h);
+    }
+    if (act.end_time) {
+      const h = parseInt(act.end_time.split(':')[0], 10);
+      if (!isNaN(h)) maxHour = Math.max(maxHour, Math.min(23, h + 1));
+    }
+  });
+
   const timelineHours = [];
-  for (let h = wakeHour; h <= Math.min(23, sleepHour + 1); h++) {
+  for (let h = minHour; h <= Math.min(23, maxHour); h++) {
     timelineHours.push(h);
   }
 
@@ -239,10 +258,9 @@ export default function MyDay() {
                 const decStart = timeToDecimal(act.start_time);
                 const decEnd = timeToDecimal(act.end_time);
 
-                // Skip drawing if outside wake/sleep limits
-                if (decStart < wakeHour || decStart > sleepHour + 1) return null;
+                if (isNaN(decStart) || isNaN(decEnd)) return null;
 
-                const topPos = (decStart - wakeHour) * 70;
+                const topPos = Math.max(0, (decStart - minHour) * 70);
                 const cardHeight = Math.max(45, (decEnd - decStart) * 70 - 4); // Subtract 4px for spacing margin
                 const isCompleted = act.completed === 1;
 
@@ -413,7 +431,7 @@ export default function MyDay() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Start Time</label>
               <input
@@ -437,7 +455,7 @@ export default function MyDay() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Category</label>
               <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-field">
