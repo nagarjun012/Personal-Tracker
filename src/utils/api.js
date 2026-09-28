@@ -20,9 +20,11 @@ async function handleRequest(url, method = 'GET', body = null) {
   const urlParams = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '');
 
   // Auth Routes
+  if (cleanUrl === '/api/auth/workspace') return storage.enterWorkspace(body?.name);
   if (cleanUrl === '/api/auth/login') return storage.login(body.email, body.password);
   if (cleanUrl === '/api/auth/signup') return storage.signup(body.name, body.email, body.password);
   if (cleanUrl === '/api/auth/reset-password') return storage.resetPassword(body.email, body.newPassword || body.password);
+  if (cleanUrl === '/api/auth/profile' && method === 'PUT') return storage.updateProfileName(userId, body?.name);
   if (cleanUrl === '/api/auth/me') return storage.getCurrentUser(userId);
 
   // Settings
@@ -47,12 +49,16 @@ async function handleRequest(url, method = 'GET', body = null) {
     if (method === 'GET') return storage.getHabits(userId);
     if (method === 'POST') return storage.createHabit(userId, body);
   }
+  if (cleanUrl === '/api/habits/log' && method === 'POST') {
+    return storage.logHabit(userId, body.habit_id, body.date, body.status);
+  }
   if (cleanUrl.match(/\/api\/habits\/\d+\/log/)) {
     const id = cleanUrl.split('/')[3];
     return storage.logHabit(userId, id, body.date, body.status);
   }
   if (cleanUrl.startsWith('/api/habits/')) {
     const id = cleanUrl.replace('/api/habits/', '');
+    if (method === 'PUT') return storage.updateHabit(userId, id, body);
     if (method === 'DELETE') return storage.deleteHabit(userId, id);
   }
 
@@ -67,6 +73,7 @@ async function handleRequest(url, method = 'GET', body = null) {
   }
   if (cleanUrl.startsWith('/api/goals/')) {
     const id = cleanUrl.replace('/api/goals/', '');
+    if (method === 'PUT') return storage.updateGoal(userId, id, body);
     if (method === 'DELETE') return storage.deleteGoal(userId, id);
   }
 
@@ -89,11 +96,12 @@ async function handleRequest(url, method = 'GET', body = null) {
   if (cleanUrl.startsWith('/api/time-entries/')) {
     const id = cleanUrl.replace('/api/time-entries/', '');
     if (method === 'PUT') return storage.updateTimeEntry(userId, id, body);
+    if (method === 'DELETE') return storage.deleteTimeEntry(userId, id);
   }
 
   // Journal & Mood
   if (cleanUrl === '/api/journal') {
-    if (method === 'GET') return storage.getJournalEntries(userId, urlParams.get('date'), urlParams.get('search'));
+    if (method === 'GET') return storage.getJournalEntries(userId, urlParams.get('date'), urlParams.get('q') || urlParams.get('search'));
     if (method === 'POST') return storage.saveJournalEntry(userId, body);
   }
   if (cleanUrl === '/api/mood') {
@@ -127,7 +135,16 @@ export const api = {
   put: (url, body) => handleRequest(url, 'PUT', body),
   delete: (url) => handleRequest(url, 'DELETE'),
 
-  // Auth endpoints
+  // Auth endpoints: Direct Workspace & Traditional
+  enterWorkspace: async (name) => {
+    const data = await handleRequest('/api/auth/workspace', 'POST', { name });
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data;
+  },
+
   login: async (email, password) => {
     const data = await handleRequest('/api/auth/login', 'POST', { email, password });
     if (data.token) {
@@ -153,6 +170,10 @@ export const api = {
   
   resetPassword: (email, newPassword = null) => {
     return handleRequest('/api/auth/reset-password', 'POST', { email, newPassword });
+  },
+
+  updateProfile: (userId, name) => {
+    return handleRequest('/api/auth/profile', 'PUT', { name });
   },
 
   getCurrentUser: () => {

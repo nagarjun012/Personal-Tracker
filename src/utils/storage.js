@@ -146,21 +146,25 @@ export function initBrowserStorage() {
       id: 1,
       user_id: 1,
       date: new Date().toLocaleDateString('sv'),
+      morning_accomplish: 'Migrate data layer to client-side storage for seamless 100% free Netlify deployment.',
       morning_intention: 'Migrate data layer to client-side storage for seamless 100% free Netlify deployment.',
+      evening_accomplish: 'Storage engine completed! App runs completely inside Chrome and Edge.',
       evening_review: 'Storage engine completed! App runs completely inside Chrome and Edge.',
       went_well: 'Local storage strategy avoids any remote server dependencies.',
       could_improve: 'Stay focused on core features.',
       grateful_for: 'Modern browser database capabilities like LocalStorage and IndexedDB.',
+      tomorrow_focus: 'Deploy to Netlify and test password recovery flow.',
       tomorrow_goals: 'Deploy to Netlify and test password recovery flow.',
       notes: 'Local-first architecture feels lightning fast.',
       tags: 'netlify,client-side,deploy',
+      is_favorite: 1,
       is_starred: 1
     }
   ];
   setItem(KEYS.JOURNAL, journalEntries);
 
   const moodLogs = [
-    { id: 1, user_id: 1, date: new Date().toLocaleDateString('sv'), mood_score: 5, energy_score: 5, notes: 'Feeling super productive and energetic!' }
+    { id: 1, user_id: 1, date: new Date().toLocaleDateString('sv'), mood: 'Good', energy: 'High', mood_score: 5, energy_score: 5, notes: 'Feeling super productive and energetic!' }
   ];
   setItem(KEYS.MOOD, moodLogs);
 
@@ -177,7 +181,61 @@ export function initBrowserStorage() {
 // ==========================================
 
 export const storage = {
-  // Auth Methods
+  // Auth Methods: Direct Access Workspace & Traditional
+  enterWorkspace: async (name = 'Personal Workspace') => {
+    const users = getItem(KEYS.USERS, []);
+    let user = users.find(u => u.id === 1);
+    const resolvedName = (name && name.trim()) ? name.trim() : 'Personal Workspace';
+
+    if (!user) {
+      user = {
+        id: 1,
+        name: resolvedName,
+        email: 'personal@device',
+        password_hash: '',
+        created_at: new Date().toISOString()
+      };
+      users.push(user);
+      setItem(KEYS.USERS, users);
+    } else if (name && name.trim()) {
+      user.name = resolvedName;
+      setItem(KEYS.USERS, users);
+    }
+
+    // Ensure settings exist for user
+    const settings = getItem(KEYS.SETTINGS, []);
+    if (!settings.some(s => s.user_id === user.id)) {
+      settings.push({
+        id: 1,
+        user_id: user.id,
+        theme: 'system',
+        notifications_enabled: 1,
+        xp_enabled: 1,
+        score_weights: { tasks: 30, habits: 20, goals: 20, time: 15, schedule: 15 },
+        wake_time: '07:00',
+        sleep_time: '22:30',
+        main_focus: 'Personal Improvement & Focus'
+      });
+      setItem(KEYS.SETTINGS, settings);
+    }
+
+    const token = `token_workspace_${user.id}`;
+    return { token, user: { id: user.id, name: user.name, email: user.email } };
+  },
+
+  updateProfileName: async (userId, name) => {
+    const users = getItem(KEYS.USERS, []);
+    const userIndex = users.findIndex(u => u.id === Number(userId));
+    if (userIndex !== -1) {
+      users[userIndex].name = name.trim();
+      setItem(KEYS.USERS, users);
+      const updatedUser = { id: users[userIndex].id, name: users[userIndex].name, email: users[userIndex].email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return { user: updatedUser };
+    }
+    throw new Error('User not found');
+  },
+
   signup: async (name, email, password) => {
     const users = getItem(KEYS.USERS, []);
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
@@ -419,7 +477,8 @@ export const storage = {
 
   logHabit: async (userId, habit_id, date, status) => {
     const logs = getItem(KEYS.HABIT_LOGS, []);
-    const index = logs.findIndex(l => l.habit_id === Number(habit_id) && l.date === date);
+    const habitIdNum = Number(habit_id);
+    const index = logs.findIndex(l => l.habit_id === habitIdNum && l.date === date);
     if (index !== -1) {
       const prevStatus = logs[index].status;
       logs[index].status = status;
@@ -429,13 +488,39 @@ export const storage = {
         storage.addXp(userId, -5, 'Reverted habit completion', date);
       }
     } else {
-      logs.push({ id: Date.now(), habit_id: Number(habit_id), date, status });
+      logs.push({ id: Date.now(), habit_id: habitIdNum, date, status });
       if (status === 'completed') {
         storage.addXp(userId, 5, 'Logged habit completion', date);
       }
     }
     setItem(KEYS.HABIT_LOGS, logs);
-    return { message: 'Habit log recorded.' };
+
+    const habitLogs = logs.filter(l => l.habit_id === habitIdNum);
+    const completedDates = habitLogs.filter(l => l.status === 'completed').map(l => l.date);
+    const stats = storage.calculateHabitStats(completedDates, habitLogs);
+
+    return {
+      habit_id: habitIdNum,
+      date,
+      status,
+      ...stats,
+      logs: habitLogs
+    };
+  },
+
+  updateHabit: async (userId, id, habitData) => {
+    const habits = getItem(KEYS.HABITS, []);
+    const index = habits.findIndex(h => h.id === Number(id) && h.user_id === Number(userId));
+    if (index === -1) throw new Error('Habit not found.');
+
+    habits[index] = { ...habits[index], ...habitData };
+    setItem(KEYS.HABITS, habits);
+
+    const habitLogs = getItem(KEYS.HABIT_LOGS, []);
+    const logs = habitLogs.filter(l => l.habit_id === Number(id));
+    const completedDates = logs.filter(l => l.status === 'completed').map(l => l.date);
+    const stats = storage.calculateHabitStats(completedDates, logs);
+    return { ...habits[index], ...stats, logs };
   },
 
   deleteHabit: async (userId, id) => {
@@ -512,7 +597,42 @@ export const storage = {
       storage.addXp(userId, -20, `Reverted milestone: ${milestones[index].title}`);
     }
 
+    // Re-calculate goal progress based on milestones
+    const goalId = milestones[index].goal_id;
+    const allGoalMilestones = milestones.filter(m => m.goal_id === goalId);
+    const completedCount = allGoalMilestones.filter(m => m.status === 'completed').length;
+    const totalCount = allGoalMilestones.length;
+
+    if (totalCount > 0) {
+      const goals = getItem(KEYS.GOALS, []);
+      const gIndex = goals.findIndex(g => g.id === goalId && g.user_id === Number(userId));
+      if (gIndex !== -1) {
+        const oldProgress = goals[gIndex].progress || 0;
+        const newProgress = Math.round((completedCount / totalCount) * 100);
+        goals[gIndex].progress = newProgress;
+        setItem(KEYS.GOALS, goals);
+
+        if (newProgress === 100 && oldProgress < 100) {
+          storage.addXp(userId, 100, `Completed goal: ${goals[gIndex].title}`);
+        } else if (newProgress < 100 && oldProgress === 100) {
+          storage.addXp(userId, -100, `Goal reverted: ${goals[gIndex].title}`);
+        }
+      }
+    }
+
     return milestones[index];
+  },
+
+  updateGoal: async (userId, id, goalData) => {
+    const goals = getItem(KEYS.GOALS, []);
+    const index = goals.findIndex(g => g.id === Number(id) && g.user_id === Number(userId));
+    if (index === -1) throw new Error('Goal not found.');
+
+    goals[index] = { ...goals[index], ...goalData };
+    setItem(KEYS.GOALS, goals);
+
+    const milestones = getItem(KEYS.MILESTONES, []).filter(m => m.goal_id === Number(id));
+    return { ...goals[index], milestones };
   },
 
   deleteGoal: async (userId, id) => {
@@ -586,7 +706,8 @@ export const storage = {
       activity_name: data.activity_name,
       category: data.category || 'coding',
       start_time: data.start_time || new Date().toISOString(),
-      stop_time: data.stop_time || null,
+      stop_time: data.stop_time || data.end_time || null,
+      end_time: data.end_time || data.stop_time || null,
       duration: data.duration || null,
       notes: data.notes || ''
     };
@@ -608,6 +729,7 @@ export const storage = {
       ...entries[index],
       ...data,
       stop_time: stopTime,
+      end_time: stopTime,
       duration: data.duration || calcDuration
     };
     setItem(KEYS.TIME_ENTRIES, entries);
@@ -620,6 +742,13 @@ export const storage = {
     return entries[index];
   },
 
+  deleteTimeEntry: async (userId, id) => {
+    let entries = getItem(KEYS.TIME_ENTRIES, []);
+    entries = entries.filter(t => !(t.id === Number(id) && t.user_id === Number(userId)));
+    setItem(KEYS.TIME_ENTRIES, entries);
+    return { message: 'Time entry deleted successfully.' };
+  },
+
   // Journal & Mood Methods
   getJournalEntries: async (userId, date = null, search = null) => {
     let list = getItem(KEYS.JOURNAL, []).filter(j => j.user_id === Number(userId));
@@ -627,13 +756,21 @@ export const storage = {
     if (search) {
       const s = search.toLowerCase();
       list = list.filter(j => 
+        (j.morning_accomplish && j.morning_accomplish.toLowerCase().includes(s)) ||
         (j.morning_intention && j.morning_intention.toLowerCase().includes(s)) ||
+        (j.evening_accomplish && j.evening_accomplish.toLowerCase().includes(s)) ||
         (j.evening_review && j.evening_review.toLowerCase().includes(s)) ||
         (j.notes && j.notes.toLowerCase().includes(s)) ||
         (j.tags && j.tags.toLowerCase().includes(s))
       );
     }
-    return list.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return list.map(j => ({
+      ...j,
+      morning_accomplish: j.morning_accomplish || j.morning_intention || '',
+      evening_accomplish: j.evening_accomplish || j.evening_review || '',
+      tomorrow_focus: j.tomorrow_focus || j.tomorrow_goals || '',
+      is_favorite: j.is_favorite !== undefined ? j.is_favorite : (j.is_starred ? 1 : 0)
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
   },
 
   saveJournalEntry: async (userId, data) => {
@@ -641,24 +778,38 @@ export const storage = {
     const filterDate = data.date || new Date().toLocaleDateString('sv');
     const index = list.findIndex(j => j.user_id === Number(userId) && j.date === filterDate);
 
+    const morningVal = data.morning_accomplish || data.morning_intention || '';
+    const eveningVal = data.evening_accomplish || data.evening_review || '';
+    const tomorrowVal = data.tomorrow_focus || data.tomorrow_goals || '';
+    const favVal = data.is_favorite !== undefined ? (data.is_favorite ? 1 : 0) : (data.is_starred ? 1 : 0);
+
+    const entryPayload = {
+      ...data,
+      date: filterDate,
+      morning_accomplish: morningVal,
+      morning_intention: morningVal,
+      evening_accomplish: eveningVal,
+      evening_review: eveningVal,
+      went_well: data.went_well || '',
+      could_improve: data.could_improve || '',
+      grateful_for: data.grateful_for || '',
+      tomorrow_focus: tomorrowVal,
+      tomorrow_goals: tomorrowVal,
+      notes: data.notes || '',
+      tags: data.tags || '',
+      is_favorite: favVal,
+      is_starred: favVal
+    };
+
     if (index !== -1) {
-      list[index] = { ...list[index], ...data };
+      list[index] = { ...list[index], ...entryPayload };
       setItem(KEYS.JOURNAL, list);
       return list[index];
     } else {
       const newEntry = {
         id: Date.now(),
         user_id: Number(userId),
-        date: filterDate,
-        morning_intention: data.morning_intention || '',
-        evening_review: data.evening_review || '',
-        went_well: data.went_well || '',
-        could_improve: data.could_improve || '',
-        grateful_for: data.grateful_for || '',
-        tomorrow_goals: data.tomorrow_goals || '',
-        notes: data.notes || '',
-        tags: data.tags || '',
-        is_starred: data.is_starred ? 1 : 0
+        ...entryPayload
       };
       list.push(newEntry);
       setItem(KEYS.JOURNAL, list);
@@ -678,8 +829,23 @@ export const storage = {
     const filterDate = data.date || new Date().toLocaleDateString('sv');
     const index = list.findIndex(m => m.user_id === Number(userId) && m.date === filterDate);
 
+    const moodScoreMap = { 'Excellent': 5, 'Good': 4, 'Normal': 3, 'Low': 2, 'Very Low': 1 };
+    const energyScoreMap = { 'High': 5, 'Medium': 3, 'Low': 1 };
+
+    const moodStr = data.mood || 'Normal';
+    const energyStr = data.energy || 'Medium';
+    const moodScore = data.mood_score || moodScoreMap[moodStr] || 3;
+    const energyScore = data.energy_score || energyScoreMap[energyStr] || 3;
+
     if (index !== -1) {
-      list[index] = { ...list[index], ...data };
+      list[index] = { 
+        ...list[index], 
+        ...data, 
+        mood: moodStr, 
+        energy: energyStr, 
+        mood_score: moodScore, 
+        energy_score: energyScore 
+      };
       setItem(KEYS.MOOD, list);
       return list[index];
     } else {
@@ -687,8 +853,10 @@ export const storage = {
         id: Date.now(),
         user_id: Number(userId),
         date: filterDate,
-        mood_score: data.mood_score || 3,
-        energy_score: data.energy_score || 3,
+        mood: moodStr,
+        energy: energyStr,
+        mood_score: moodScore,
+        energy_score: energyScore,
         notes: data.notes || ''
       };
       list.push(newLog);
@@ -712,7 +880,7 @@ export const storage = {
     }
 
     // 2. Habit Completion
-    const activeHabits = getItem(KEYS.HABITS, []).filter(h => h.user_id === Number(userId) && h.start_date <= date);
+    const activeHabits = getItem(KEYS.HABITS, []).filter(h => h.user_id === Number(userId) && (!h.start_date || h.start_date <= date));
     const habitLogs = getItem(KEYS.HABIT_LOGS, []);
     let habitsScore = 100;
     if (activeHabits.length > 0) {
@@ -754,13 +922,15 @@ export const storage = {
       (scheduleScore * (weights.schedule / 100))
     );
 
+    const calculatedMinutes = Math.round(totalFocusSec / 60);
+
     return {
       score: overallScore,
       breakdown: {
         tasks: { score: tasksScore, completed: dailyTasks.filter(t => t.status === 'Completed').length, total: dailyTasks.length, weight: weights.tasks },
         habits: { score: habitsScore, completed: activeHabits.filter(h => habitLogs.some(l => l.habit_id === h.id && l.date === date && l.status === 'completed')).length, total: activeHabits.length, weight: weights.habits },
         goals: { score: goalsScore, total: userGoals.length, weight: weights.goals },
-        time: { score: timeScore, trackedMinutes: Math.round(totalFocusSec / 60), targetMinutes: 240, weight: weights.time },
+        time: { score: timeScore, trackedMinutes: calculatedMinutes, minutesTracked: calculatedMinutes, targetMinutes: 240, weight: weights.time },
         schedule: { score: scheduleScore, completed: schedActs.filter(a => a.completed === 1).length, total: schedActs.length, weight: weights.schedule }
       }
     };
@@ -841,17 +1011,23 @@ export const storage = {
     const moodLogs = getItem(KEYS.MOOD, []).filter(m => m.user_id === Number(userId));
     const moodCorrelation = moodLogs.map(m => {
       const rev = productivityHistory.find(ph => ph.date === m.date);
+      const scoreVal = rev ? rev.score : 70;
       return {
         date: m.date,
-        mood: m.mood_score,
-        energy: m.energy_score,
-        score: rev ? rev.score : 70
+        mood: m.mood || (m.mood_score >= 4 ? 'Good' : (m.mood_score <= 2 ? 'Low' : 'Normal')),
+        energy: m.energy || (m.energy_score >= 4 ? 'High' : (m.energy_score <= 2 ? 'Low' : 'Medium')),
+        score: scoreVal,
+        productivity_score: scoreVal
       };
     });
 
+    const taskRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
+    const taskStatsObj = { total: totalTasks, completed: completedTasks, pending: pendingTasks, rate: taskRate };
+
     return {
       productivityHistory,
-      taskStats: { total: totalTasks, completed: completedTasks, pending: pendingTasks },
+      tasks: taskStatsObj,
+      taskStats: taskStatsObj,
       timeByCategories: timeTrackingByCategory,
       moodCorrelation
     };
@@ -935,15 +1111,23 @@ export const storage = {
 
   // Global Search
   searchAll: async (userId, query) => {
-    if (!query) return { tasks: [], habits: [], goals: [], journal: [] };
+    if (!query) return { results: [] };
     const q = query.toLowerCase();
+    const results = [];
 
-    const tasks = getItem(KEYS.TASKS, []).filter(t => t.user_id === Number(userId) && t.title.toLowerCase().includes(q));
+    const tasks = getItem(KEYS.TASKS, []).filter(t => t.user_id === Number(userId) && (t.title.toLowerCase().includes(q) || (t.description && t.description.toLowerCase().includes(q))));
+    tasks.slice(0, 5).forEach(t => results.push({ type: 'task', title: t.title, subtitle: `Task (${t.category}) - Due ${t.due_date || 'No Date'} - ${t.status}`, id: t.id }));
+
     const habits = getItem(KEYS.HABITS, []).filter(h => h.user_id === Number(userId) && h.name.toLowerCase().includes(q));
-    const goals = getItem(KEYS.GOALS, []).filter(g => g.user_id === Number(userId) && g.title.toLowerCase().includes(q));
-    const journal = getItem(KEYS.JOURNAL, []).filter(j => j.user_id === Number(userId) && ((j.morning_intention && j.morning_intention.toLowerCase().includes(q)) || (j.notes && j.notes.toLowerCase().includes(q))));
+    habits.slice(0, 5).forEach(h => results.push({ type: 'habit', title: h.name, subtitle: `Habit (${h.frequency})`, id: h.id }));
 
-    return { tasks, habits, goals, journal };
+    const goals = getItem(KEYS.GOALS, []).filter(g => g.user_id === Number(userId) && (g.title.toLowerCase().includes(q) || (g.description && g.description.toLowerCase().includes(q))));
+    goals.slice(0, 5).forEach(g => results.push({ type: 'goal', title: g.title, subtitle: `${(g.type || 'monthly').toUpperCase()} Goal`, id: g.id }));
+
+    const journal = getItem(KEYS.JOURNAL, []).filter(j => j.user_id === Number(userId) && ((j.morning_accomplish && j.morning_accomplish.toLowerCase().includes(q)) || (j.morning_intention && j.morning_intention.toLowerCase().includes(q)) || (j.notes && j.notes.toLowerCase().includes(q))));
+    journal.slice(0, 5).forEach(j => results.push({ type: 'journal', title: `Journal Entry - ${j.date}`, subtitle: j.notes ? j.notes.substring(0, 50) + '...' : 'Intention entry', id: j.id, date: j.date }));
+
+    return { results };
   },
 
   // JSON Export & Delete Account
