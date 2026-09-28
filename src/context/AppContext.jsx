@@ -6,10 +6,15 @@ const AppContext = createContext();
 export function AppProvider({ children }) {
   const [user, setUser] = useState(() => {
     const cached = localStorage.getItem('user');
-    return cached ? JSON.parse(cached) : null;
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return null;
   });
   
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [settings, setSettings] = useState(null);
   const [xpData, setXpData] = useState({ totalXp: 0, level: 1, rank: 'Beginner', xpForNext: 100, prevLevelXp: 0, logs: [] });
   const [toasts, setToasts] = useState([]);
@@ -26,6 +31,10 @@ export function AppProvider({ children }) {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
 
+  // Data revision tracker for reactive cross-component synchronization
+  const [dataRevision, setDataRevision] = useState(0);
+  const notifyDataChanged = () => setDataRevision((r) => r + 1);
+
   // Loading flag
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +47,31 @@ export function AppProvider({ children }) {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
+  };
+
+  // Direct Workspace Entry (No password required)
+  const enterWorkspace = async (workspaceName = 'Personal Workspace') => {
+    try {
+      const data = await api.enterWorkspace(workspaceName);
+      setUser(data.user);
+      setToken(data.token);
+      addToast(`Welcome to ${data.user.name}! 👋`, 'success');
+      await fetchUserData();
+    } catch (err) {
+      addToast(err.message || 'Failed to enter workspace.', 'error');
+    }
+  };
+
+  const updateProfileName = async (newName) => {
+    if (!newName || !newName.trim()) return;
+    const resolved = newName.trim();
+    try {
+      const data = await api.updateProfile(user?.id, resolved);
+      setUser(data.user);
+      addToast('Profile name updated!', 'success');
+    } catch (e) {
+      addToast('Failed to update name.', 'error');
+    }
   };
 
   // Login handler
@@ -82,7 +116,7 @@ export function AppProvider({ children }) {
 
   // Fetch all user settings, gamification, timer logs
   const fetchUserData = async () => {
-    if (!localStorage.getItem('token')) {
+    if (!localStorage.getItem('token') || !localStorage.getItem('user')) {
       setLoading(false);
       return;
     }
@@ -204,11 +238,12 @@ export function AppProvider({ children }) {
     try {
       const stopTime = new Date().toISOString();
       const entry = await api.put(`/api/time-entries/${runningTimer.id}`, { end_time: stopTime });
-      const elapsedMin = Math.round(entry.duration / 60);
+      const elapsedMin = Math.round((entry?.duration || 0) / 60);
       addToast(`Stopped. Focus logged: ${elapsedMin} minutes.`, 'success');
       setRunningTimer(null);
       localStorage.removeItem('active_timer');
       await refreshXp();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to stop timer.', 'error');
     }
@@ -245,11 +280,15 @@ export function AppProvider({ children }) {
         setShowCommandPalette,
         login,
         signup,
+        enterWorkspace,
+        updateProfileName,
         logout,
         addToast,
         updateSettings,
         startTimer,
         stopTimer,
+        dataRevision,
+        notifyDataChanged,
         refreshXp,
         fetchUserData
       }}
@@ -260,5 +299,6 @@ export function AppProvider({ children }) {
 }
 
 export function useApp() {
-  return useContext(AppContext);
+  const context = useContext(AppContext);
+  return context || {};
 }
