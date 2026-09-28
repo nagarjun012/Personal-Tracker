@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function TimeTracker() {
-  const { runningTimer, timerSeconds, startTimer, stopTimer, addToast } = useApp();
+  const { runningTimer, timerSeconds, startTimer, stopTimer, addToast, notifyDataChanged } = useApp();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +45,18 @@ export default function TimeTracker() {
     }
     startTimer(activityName, category);
     setActivityName('');
+  };
+
+  const handleDeleteEntry = async (id) => {
+    if (!window.confirm('Delete this focus session log?')) return;
+    try {
+      await api.delete(`/api/time-entries/${id}`);
+      addToast('Focus session log removed.', 'info');
+      fetchEntries();
+      notifyDataChanged();
+    } catch (err) {
+      addToast('Failed to delete time log.', 'error');
+    }
   };
 
   const formatDuration = (sec) => {
@@ -263,6 +275,22 @@ export default function TimeTracker() {
                         }}>
                           {durationFormatted}
                         </span>
+                        <button
+                          onClick={() => handleDeleteEntry(entry.id)}
+                          title="Delete session"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-tertiary)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                   );

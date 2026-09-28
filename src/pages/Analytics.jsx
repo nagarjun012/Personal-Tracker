@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
 import { Card } from '../components/Card';
-import { DonutChart, LineChart, BarChart } from '../components/Charts';
+import Modal from '../components/Modal';
+import { DonutChart, LineChart } from '../components/Charts';
 import { 
   TrendingUp, 
   CheckSquare, 
@@ -10,7 +11,6 @@ import {
   Timer, 
   Scale, 
   HelpCircle,
-  Calendar,
   Smile,
   BarChart3
 } from 'lucide-react';
@@ -21,6 +21,7 @@ export default function Analytics() {
   const [dailyReview, setDailyReview] = useState(null);
   const [range, setRange] = useState('7days'); // '7days', '30days'
   const [loading, setLoading] = useState(true);
+  const [showSpecsModal, setShowSpecsModal] = useState(false);
 
   const fetchAnalyticsData = async () => {
     setLoading(true);
@@ -107,7 +108,7 @@ export default function Analytics() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }} className="animate-fade">
       
       {/* Header section */}
-      <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Analytics</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Identify productivity patterns, streaks, and correlations.</p>
@@ -207,7 +208,7 @@ export default function Analytics() {
       >
         {/* Productivity Line graph */}
         <Card style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <TrendingUp size={18} style={{ color: 'var(--accent-primary)' }} />
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Productivity Score Trend</h3>
@@ -229,12 +230,19 @@ export default function Analytics() {
 
       {/* Dynamic transparent scoring breakdown calculator */}
       <Card style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Scale size={18} style={{ color: 'var(--accent-primary)' }} />
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Today's Score Breakdown: {todayScore}/100</h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--text-tertiary)', cursor: 'pointer' }} title="Scoring weight specifications">
+          <div 
+            onClick={() => setShowSpecsModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--accent-primary)', cursor: 'pointer', padding: '4px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(99,102,241,0.08)' }} 
+            title="View scoring weight specifications"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setShowSpecsModal(true)}
+          >
             <HelpCircle size={14} />
             <span>Calculation Specs</span>
           </div>
@@ -288,7 +296,7 @@ export default function Analytics() {
         {moodCorrelation.length === 0 ? (
           <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', textAlign: 'center' }}>Not enough mood logs recorded to plot correlations.</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="scroll-touch" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
@@ -304,7 +312,7 @@ export default function Analytics() {
                     <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 500 }}>{item.date}</td>
                     <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>{item.mood}</td>
                     <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>{item.energy}</td>
-                    <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-primary)' }}>{item.productivity_score}%</td>
+                    <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-primary)' }}>{item.productivity_score ?? item.score ?? 70}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -312,6 +320,59 @@ export default function Analytics() {
           </div>
         )}
       </Card>
+
+      <Modal
+        isOpen={showSpecsModal}
+        onClose={() => setShowSpecsModal(false)}
+        title="Productivity Score Calculation Specs"
+        maxWidth="520px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <p style={{ margin: 0 }}>
+            The daily score (0–100) is dynamically computed using a balanced 5-pillar heuristic:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent-primary)', marginBottom: '4px' }}>
+                <span>1. Tasks Completion</span>
+                <span>30%</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-tertiary)' }}>Percentage of scheduled and assigned tasks marked completed today.</p>
+            </div>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent-amber)', marginBottom: '4px' }}>
+                <span>2. Habits Adherence</span>
+                <span>20%</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-tertiary)' }}>Proportion of active daily habits checked off.</p>
+            </div>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent-purple)', marginBottom: '4px' }}>
+                <span>3. Goals Progress</span>
+                <span>20%</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-tertiary)' }}>Average milestone progress across active target objectives.</p>
+            </div>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent-green)', marginBottom: '4px' }}>
+                <span>4. Focus Time Tracked</span>
+                <span>15%</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-tertiary)' }}>Normalized against a daily target of 240 minutes (4 hours) of dedicated focus.</p>
+            </div>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px' }}>
+                <span>5. Schedule Alignment</span>
+                <span>15%</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--text-tertiary)' }}>Adherence to timeboxed agenda slots on My Day calendar.</p>
+            </div>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', margin: 0 }}>
+            Scoring weights can be customized in <strong>Settings &gt; Preferences</strong>.
+          </p>
+        </div>
+      </Modal>
 
     </div>
   );

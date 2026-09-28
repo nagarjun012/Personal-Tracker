@@ -9,13 +9,11 @@ import {
   Calendar,
   BookOpen,
   Award,
-  ChevronRight,
-  TrendingUp,
   Hash
 } from 'lucide-react';
 
 export default function Journal() {
-  const { refreshXp, addToast } = useApp();
+  const { refreshXp, addToast, notifyDataChanged } = useApp();
   const [activeDate, setActiveDate] = useState(new Date().toLocaleDateString('sv'));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,7 +39,7 @@ export default function Journal() {
     setLoading(true);
     try {
       const results = await api.get(`/api/journal?date=${activeDate}`);
-      if (results.length > 0) {
+      if (Array.isArray(results) && results.length > 0) {
         const entry = results[0];
         setMorning(entry.morning_accomplish || '');
         setEvening(entry.evening_accomplish || '');
@@ -94,6 +92,7 @@ export default function Journal() {
       addToast('Daily reflection saved! +15 XP logged! ⭐', 'success');
       refreshXp();
       fetchJournalEntry();
+      notifyDataChanged();
     } catch (err) {
       addToast('Failed to save journal.', 'error');
     } finally {
@@ -246,7 +245,7 @@ export default function Journal() {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-row">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>What went well today?</label>
                         <input
@@ -269,7 +268,7 @@ export default function Journal() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-row">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>What could I improve tomorrow?</label>
                         <input
@@ -326,7 +325,7 @@ export default function Journal() {
                 type="submit" 
                 disabled={saving}
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '0.8rem', marginTop: '1rem', display: 'flex', justify: 'center', gap: '6px' }}
+                style={{ width: '100%', padding: '0.8rem', marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '6px' }}
               >
                 <Save size={16} fill="white" />
                 {saving ? 'Saving...' : 'Save Reflections'}
