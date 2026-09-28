@@ -59,6 +59,10 @@ export default function Onboarding({ onComplete }) {
   };
 
   const handleFinish = async () => {
+    if (!focus.trim()) {
+      addToast('Please tell us your main focus.', 'warning');
+      return;
+    }
     try {
       // 1. Update user settings (wake/sleep, main focus)
       const defaultWeights = {
@@ -81,9 +85,9 @@ export default function Onboarding({ onComplete }) {
 
       // 2. Insert any newly selected habits if they differ from initial defaults
       const habitsList = await api.get('/api/habits');
-      const existingNames = habitsList.map(h => h.name);
+      const existingNames = (Array.isArray(habitsList) ? habitsList : []).map(h => h.name);
       
-      for (const hName of habits) {
+      for (const hName of (habits || [])) {
         if (!existingNames.includes(hName)) {
           const matchedOpt = habitOptions.find(o => o.name === hName);
           await api.post('/api/habits', {
@@ -97,7 +101,7 @@ export default function Onboarding({ onComplete }) {
       }
 
       // 3. Create initial Goals based on selected goals
-      for (const selectedGoal of goals) {
+      for (const selectedGoal of (goals || [])) {
         await api.post('/api/goals', {
           title: selectedGoal,
           type: 'monthly',
@@ -123,7 +127,7 @@ export default function Onboarding({ onComplete }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem',
+      padding: 'clamp(0.75rem, 3vw, 2rem)',
       background: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.04), transparent 50%)'
     }}
     className="animate-fade"
@@ -131,7 +135,7 @@ export default function Onboarding({ onComplete }) {
       <div className="glass-panel" style={{
         width: '100%',
         maxWidth: '550px',
-        padding: '3rem 2.5rem',
+        padding: 'clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2.5rem)',
         borderRadius: 'var(--radius-lg)',
         background: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
@@ -177,7 +181,7 @@ export default function Onboarding({ onComplete }) {
             <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)' }}>
                 <Target size={24} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, uppercase: 'true' }}>Goals</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Goals</span>
               </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>What are your main goals?</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select what you want to achieve (we'll initialize trackers for these).</p>
@@ -214,11 +218,11 @@ export default function Onboarding({ onComplete }) {
             <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-purple)' }}>
                 <Award size={24} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, uppercase: 'true' }}>Habits</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Habits</span>
               </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Which habits do you want to track?</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Consistent habits build streaks and earn you daily XP bonuses.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginTop: '0.5rem' }}>
                 {habitOptions.map((h) => {
                   const isSelected = habits.includes(h.name);
                   return (
